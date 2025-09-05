@@ -12,22 +12,22 @@ import AuthLayout from "./components/auth/Layout";
 const queryClient = new QueryClient();
 
 const App = () => (
-	<QueryClientProvider client={queryClient}>
-		<TooltipProvider>
-			<Toaster />
-			<Sonner />
-			<BrowserRouter>
-				<Routes>
-					<Route path='/auth' element={<AuthLayout />}>
-						<Route path='sign-in' element={<SignIn />} />
-						<Route path='sign-up' element={<SignUp />} />
-					</Route>
-					<Route path='/' element={<Index />} />
-					<Route path='*' element={<NotFound />} />
-				</Routes>
-			</BrowserRouter>
-		</TooltipProvider>
-	</QueryClientProvider>
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/auth" element={<AuthLayout />}>
+            <Route path="sign-in" element={<SignIn />} />
+            <Route path="sign-up" element={<SignUp />} />
+          </Route>
+          <Route path="/" element={<Index />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
 );
 
 export default App;

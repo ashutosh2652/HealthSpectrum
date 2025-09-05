@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Upload, Eye, Brain, FileCheck, Clock, Zap } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Upload, Eye, Brain, FileCheck, Clock, Zap } from "lucide-react";
 
 interface ProcessingSectionProps {
   onComplete: () => void;
@@ -8,33 +8,33 @@ interface ProcessingSectionProps {
 
 const steps = [
   {
-    id: 'upload',
-    title: 'Uploading Documents',
-    description: 'Securely transferring your files',
+    id: "upload",
+    title: "Uploading Documents",
+    description: "Securely transferring your files",
     icon: Upload,
-    duration: 1000
+    duration: 1000,
   },
   {
-    id: 'ocr',
-    title: 'OCR Scanning',
-    description: 'Extracting text from documents',
+    id: "ocr",
+    title: "OCR Scanning",
+    description: "Extracting text from documents",
     icon: Eye,
-    duration: 2000
+    duration: 2000,
   },
   {
-    id: 'analysis',
-    title: 'AI Analysis',
-    description: 'Analyzing medical content and extracting insights',
+    id: "analysis",
+    title: "AI Analysis",
+    description: "Analyzing medical content and extracting insights",
     icon: Brain,
-    duration: 3000
+    duration: 3000,
   },
   {
-    id: 'summary',
-    title: 'Generating Summary',
-    description: 'Creating your personalized health report',
+    id: "summary",
+    title: "Generating Summary",
+    description: "Creating your personalized health report",
     icon: FileCheck,
-    duration: 1500
-  }
+    duration: 1500,
+  },
 ];
 
 export const ProcessingSection = ({ onComplete }: ProcessingSectionProps) => {
@@ -48,17 +48,20 @@ export const ProcessingSection = ({ onComplete }: ProcessingSectionProps) => {
     steps.forEach((step, index) => {
       const timeout = setTimeout(() => {
         setCurrentStep(index);
-        
+
         // Animate progress for current step
         const stepInterval = setInterval(() => {
-          setProgress(prev => {
-            const newProgress = Math.min(prev + 1, ((index + 1) / steps.length) * 100);
+          setProgress((prev) => {
+            const newProgress = Math.min(
+              prev + 1,
+              ((index + 1) / steps.length) * 100
+            );
             return newProgress;
           });
         }, step.duration / 100);
-        
+
         intervals.push(stepInterval);
-        
+
         // Clear interval and move to next step
         setTimeout(() => {
           clearInterval(stepInterval);
@@ -66,9 +69,8 @@ export const ProcessingSection = ({ onComplete }: ProcessingSectionProps) => {
             setTimeout(onComplete, 500);
           }
         }, step.duration);
-        
       }, totalTime);
-      
+
       totalTime += step.duration;
     });
 
@@ -87,9 +89,12 @@ export const ProcessingSection = ({ onComplete }: ProcessingSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             className="mb-12"
           >
-            <h1 className="text-medical-title mb-4">Analyzing Your Documents</h1>
+            <h1 className="text-medical-title mb-4">
+              Analyzing Your Documents
+            </h1>
             <p className="text-medical-body">
-              Our AI is carefully reviewing your medical documents to provide accurate insights.
+              Our AI is carefully reviewing your medical documents to provide
+              accurate insights.
             </p>
           </motion.div>
 
@@ -101,7 +106,10 @@ export const ProcessingSection = ({ onComplete }: ProcessingSectionProps) => {
             className="relative w-64 h-64 mx-auto mb-12"
           >
             {/* Background Circle */}
-            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+            <svg
+              className="w-full h-full transform -rotate-90"
+              viewBox="0 0 100 100"
+            >
               <circle
                 cx="50"
                 cy="50"
@@ -130,7 +138,7 @@ export const ProcessingSection = ({ onComplete }: ProcessingSectionProps) => {
                 </linearGradient>
               </defs>
             </svg>
-            
+
             {/* Center Content */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
@@ -142,7 +150,7 @@ export const ProcessingSection = ({ onComplete }: ProcessingSectionProps) => {
                   className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mb-4 mx-auto"
                 >
                   {React.createElement(steps[currentStep]?.icon || Brain, {
-                    className: "w-8 h-8 text-primary-foreground"
+                    className: "w-8 h-8 text-primary-foreground",
                   })}
                 </motion.div>
                 <div className="text-3xl font-bold text-foreground mb-1">
@@ -184,24 +192,32 @@ export const ProcessingSection = ({ onComplete }: ProcessingSectionProps) => {
                 transition={{ delay: index * 0.1 }}
                 className={`
                   card-medical text-center transition-all duration-500
-                  ${index <= currentStep 
-                    ? 'bg-primary-soft border-primary/30' 
-                    : 'opacity-50'
+                  ${
+                    index <= currentStep
+                      ? "bg-primary-soft border-primary/30"
+                      : "opacity-50"
                   }
                 `}
               >
-                <div className={`
+                <div
+                  className={`
                   w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 transition-all duration-500
-                  ${index <= currentStep 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'bg-muted text-muted-foreground'
+                  ${
+                    index <= currentStep
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
                   }
-                `}>
+                `}
+                >
                   {index < currentStep ? (
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 30,
+                      }}
                     >
                       <FileCheck className="w-6 h-6" />
                     </motion.div>
@@ -209,8 +225,12 @@ export const ProcessingSection = ({ onComplete }: ProcessingSectionProps) => {
                     <step.icon className="w-6 h-6" />
                   )}
                 </div>
-                <h3 className="font-medium text-foreground mb-1">{step.title}</h3>
-                <p className="text-xs text-muted-foreground">{step.description}</p>
+                <h3 className="font-medium text-foreground mb-1">
+                  {step.title}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {step.description}
+                </p>
               </motion.div>
             ))}
           </motion.div>
@@ -224,20 +244,30 @@ export const ProcessingSection = ({ onComplete }: ProcessingSectionProps) => {
           >
             <div className="card-medical text-center">
               <Clock className="w-8 h-8 text-primary mx-auto mb-2" />
-              <div className="text-2xl font-bold text-foreground mb-1">~45s</div>
-              <div className="text-sm text-muted-foreground">Estimated Time</div>
+              <div className="text-2xl font-bold text-foreground mb-1">
+                ~45s
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Estimated Time
+              </div>
             </div>
-            
+
             <div className="card-medical text-center">
               <Zap className="w-8 h-8 text-accent mx-auto mb-2" />
-              <div className="text-2xl font-bold text-foreground mb-1">2 Files</div>
+              <div className="text-2xl font-bold text-foreground mb-1">
+                2 Files
+              </div>
               <div className="text-sm text-muted-foreground">Processing</div>
             </div>
-            
+
             <div className="card-medical text-center">
               <Brain className="w-8 h-8 text-warning mx-auto mb-2" />
-              <div className="text-2xl font-bold text-foreground mb-1">AI Model</div>
-              <div className="text-sm text-muted-foreground">Medical-GPT v2</div>
+              <div className="text-2xl font-bold text-foreground mb-1">
+                AI Model
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Medical-GPT v2
+              </div>
             </div>
           </motion.div>
         </div>

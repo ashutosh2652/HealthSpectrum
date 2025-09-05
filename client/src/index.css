@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -53,11 +53,35 @@
     --ring: 220 90% 65%;
 
     /* Beautiful Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(220 90% 65%), hsl(220 90% 75%), hsl(270 70% 70%));
-    --gradient-medical: linear-gradient(135deg, hsl(220 90% 65%), hsl(145 80% 60%), hsl(190 85% 65%));
-    --gradient-background: radial-gradient(ellipse at top, hsl(225 20% 6%), hsl(225 20% 3%));
-    --gradient-cosmic: linear-gradient(135deg, hsl(225 20% 3%), hsl(240 30% 8%), hsl(225 20% 3%));
-    --gradient-aurora: linear-gradient(135deg, hsl(220 90% 65% / 0.1), hsl(145 80% 60% / 0.1), hsl(270 70% 70% / 0.1));
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(220 90% 65%),
+      hsl(220 90% 75%),
+      hsl(270 70% 70%)
+    );
+    --gradient-medical: linear-gradient(
+      135deg,
+      hsl(220 90% 65%),
+      hsl(145 80% 60%),
+      hsl(190 85% 65%)
+    );
+    --gradient-background: radial-gradient(
+      ellipse at top,
+      hsl(225 20% 6%),
+      hsl(225 20% 3%)
+    );
+    --gradient-cosmic: linear-gradient(
+      135deg,
+      hsl(225 20% 3%),
+      hsl(240 30% 8%),
+      hsl(225 20% 3%)
+    );
+    --gradient-aurora: linear-gradient(
+      135deg,
+      hsl(220 90% 65% / 0.1),
+      hsl(145 80% 60% / 0.1),
+      hsl(270 70% 70% / 0.1)
+    );
 
     /* Enhanced Shadows */
     --shadow-medical: 0 20px 60px -10px hsl(220 90% 65% / 0.4);
@@ -99,7 +123,7 @@
   }
 
   .card-medical-glow::before {
-    content: '';
+    content: "";
     @apply absolute inset-0 bg-gradient-aurora opacity-0 transition-opacity duration-500;
   }
 
@@ -144,16 +168,29 @@
   }
 
   .cosmic-bg::before {
-    content: '';
+    content: "";
     @apply absolute inset-0 bg-gradient-cosmic;
   }
 
   .stars-pattern {
-    background-image: radial-gradient(2px 2px at 20px 30px, hsl(var(--primary-glow)), transparent),
-                      radial-gradient(2px 2px at 40px 70px, hsl(var(--accent-glow)), transparent),
-                      radial-gradient(1px 1px at 90px 40px, hsl(var(--primary)), transparent),
-                      radial-gradient(1px 1px at 130px 80px, hsl(var(--accent)), transparent),
-                      radial-gradient(2px 2px at 160px 30px, hsl(var(--primary-glow)), transparent);
+    background-image:
+      radial-gradient(
+        2px 2px at 20px 30px,
+        hsl(var(--primary-glow)),
+        transparent
+      ),
+      radial-gradient(
+        2px 2px at 40px 70px,
+        hsl(var(--accent-glow)),
+        transparent
+      ),
+      radial-gradient(1px 1px at 90px 40px, hsl(var(--primary)), transparent),
+      radial-gradient(1px 1px at 130px 80px, hsl(var(--accent)), transparent),
+      radial-gradient(
+        2px 2px at 160px 30px,
+        hsl(var(--primary-glow)),
+        transparent
+      );
     background-repeat: repeat;
     background-size: 200px 100px;
     @apply opacity-60;
@@ -194,7 +231,8 @@
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0) rotateZ(0deg);
   }
   33% {
@@ -206,7 +244,8 @@
 }
 
 @keyframes pulse-soft {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
@@ -257,7 +296,8 @@
 }
 
 @keyframes bounce-subtle {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {

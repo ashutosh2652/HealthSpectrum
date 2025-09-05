@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { Upload, File, X, Check, AlertCircle, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useState, useCallback } from "react";
+import { motion } from "framer-motion";
+import { Upload, File, X, Check, AlertCircle, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface UploadSectionProps {
   onContinue: () => void;
@@ -34,7 +34,7 @@ export const UploadSection = ({ onContinue, onBack }: UploadSectionProps) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFiles(e.dataTransfer.files);
     }
@@ -47,27 +47,29 @@ export const UploadSection = ({ onContinue, onBack }: UploadSectionProps) => {
   };
 
   const handleFiles = (fileList: FileList) => {
-    const newFiles: UploadedFile[] = Array.from(fileList).map(file => ({
+    const newFiles: UploadedFile[] = Array.from(fileList).map((file) => ({
       id: Math.random().toString(36),
       name: file.name,
       size: file.size,
       type: file.type,
-      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
+      preview: file.type.startsWith("image/")
+        ? URL.createObjectURL(file)
+        : undefined,
     }));
-    
-    setFiles(prev => [...prev, ...newFiles]);
+
+    setFiles((prev) => [...prev, ...newFiles]);
   };
 
   const removeFile = (id: string) => {
-    setFiles(prev => prev.filter(file => file.id !== id));
+    setFiles((prev) => prev.filter((file) => file.id !== id));
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const handleContinue = () => {
@@ -94,11 +96,14 @@ export const UploadSection = ({ onContinue, onBack }: UploadSectionProps) => {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Home
             </Button>
-            
-            <h1 className="text-medical-title mb-4">Upload Your Medical Documents</h1>
+
+            <h1 className="text-medical-title mb-4">
+              Upload Your Medical Documents
+            </h1>
             <p className="text-medical-body max-w-2xl mx-auto">
-              Upload prescriptions, lab results, medical reports, or any health-related documents. 
-              Our AI will analyze them and provide you with clear, actionable insights.
+              Upload prescriptions, lab results, medical reports, or any
+              health-related documents. Our AI will analyze them and provide you
+              with clear, actionable insights.
             </p>
           </motion.div>
 
@@ -112,9 +117,10 @@ export const UploadSection = ({ onContinue, onBack }: UploadSectionProps) => {
             <div
               className={`
                 relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300
-                ${dragActive 
-                  ? 'border-primary bg-primary-soft' 
-                  : 'border-border hover:border-primary/50 hover:bg-primary-soft/50'
+                ${
+                  dragActive
+                    ? "border-primary bg-primary-soft"
+                    : "border-border hover:border-primary/50 hover:bg-primary-soft/50"
                 }
               `}
               onDragEnter={handleDrag}
@@ -129,7 +135,7 @@ export const UploadSection = ({ onContinue, onBack }: UploadSectionProps) => {
                 onChange={handleFileInput}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
-              
+
               <motion.div
                 animate={dragActive ? { scale: 1.05 } : { scale: 1 }}
                 className="space-y-4"
@@ -137,7 +143,7 @@ export const UploadSection = ({ onContinue, onBack }: UploadSectionProps) => {
                 <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
                   <Upload className="w-8 h-8 text-primary" />
                 </div>
-                
+
                 <div>
                   <h3 className="text-xl font-semibold text-foreground mb-2">
                     Drop your files here or click to browse
@@ -146,10 +152,8 @@ export const UploadSection = ({ onContinue, onBack }: UploadSectionProps) => {
                     Supports PDF, JPEG, PNG files up to 10MB each
                   </p>
                 </div>
-                
-                <Button className="btn-medical-primary">
-                  Select Files
-                </Button>
+
+                <Button className="btn-medical-primary">Select Files</Button>
               </motion.div>
             </div>
           </motion.div>
@@ -162,8 +166,10 @@ export const UploadSection = ({ onContinue, onBack }: UploadSectionProps) => {
               transition={{ delay: 0.3 }}
               className="space-y-4 mb-8"
             >
-              <h3 className="text-lg font-semibold text-foreground">Uploaded Files ({files.length})</h3>
-              
+              <h3 className="text-lg font-semibold text-foreground">
+                Uploaded Files ({files.length})
+              </h3>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {files.map((file, index) => (
                   <motion.div
@@ -174,8 +180,8 @@ export const UploadSection = ({ onContinue, onBack }: UploadSectionProps) => {
                     className="card-medical flex items-center space-x-4"
                   >
                     {file.preview ? (
-                      <img 
-                        src={file.preview} 
+                      <img
+                        src={file.preview}
                         alt={file.name}
                         className="w-12 h-12 object-cover rounded-lg"
                       />
@@ -184,12 +190,16 @@ export const UploadSection = ({ onContinue, onBack }: UploadSectionProps) => {
                         <File className="w-6 h-6 text-primary" />
                       </div>
                     )}
-                    
+
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground truncate">{file.name}</p>
-                      <p className="text-sm text-muted-foreground">{formatFileSize(file.size)}</p>
+                      <p className="font-medium text-foreground truncate">
+                        {file.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatFileSize(file.size)}
+                      </p>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       <div className="status-normal">
                         <Check className="w-4 h-4" />
@@ -219,9 +229,13 @@ export const UploadSection = ({ onContinue, onBack }: UploadSectionProps) => {
             <div className="flex items-start space-x-3">
               <AlertCircle className="w-5 h-5 text-primary mt-0.5" />
               <div>
-                <h4 className="font-semibold text-primary mb-1">Your Data is Secure</h4>
+                <h4 className="font-semibold text-primary mb-1">
+                  Your Data is Secure
+                </h4>
                 <p className="text-sm text-primary/80">
-                  All documents are encrypted and processed securely. We're HIPAA compliant and never share your personal health information.
+                  All documents are encrypted and processed securely. We're
+                  HIPAA compliant and never share your personal health
+                  information.
                 </p>
               </div>
             </div>
@@ -235,7 +249,7 @@ export const UploadSection = ({ onContinue, onBack }: UploadSectionProps) => {
               transition={{ delay: 0.5 }}
               className="text-center"
             >
-              <Button 
+              <Button
                 onClick={handleContinue}
                 className="btn-medical-primary text-lg px-8 py-4"
               >
