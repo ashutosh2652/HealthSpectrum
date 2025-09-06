@@ -1,4 +1,8 @@
 // Analysis API service for LandingAI integration
+
+// Get API base URL from environment variables
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 export interface AnalysisRequest {
   file: File;
   customName: string;
@@ -122,7 +126,7 @@ export const analysisApi = {
       formData.append("fieldsSchema", JSON.stringify(request.fieldsSchema));
     }
 
-    const response = await fetch("http://localhost:5000/api/analyze", {
+    const response = await fetch(`${API_BASE_URL}/api/analyze`, {
       method: "POST",
       body: formData,
     });
@@ -139,7 +143,7 @@ export const analysisApi = {
 
   // Get analysis history
   async getAnalysisHistory(): Promise<HealthAnalysisResult[]> {
-    const response = await fetch("http://localhost:5000/api/analysis/history");
+    const response = await fetch(`${API_BASE_URL}/api/analysis/history`);
 
     if (!response.ok) {
       throw new Error("Failed to fetch analysis history");
@@ -150,7 +154,7 @@ export const analysisApi = {
 
   // Get specific analysis by ID
   async getAnalysis(id: string): Promise<HealthAnalysisResult> {
-    const response = await fetch(`http://localhost:5000/api/analysis/${id}`);
+    const response = await fetch(`${API_BASE_URL}/api/analysis/${id}`);
 
     if (!response.ok) {
       throw new Error("Failed to fetch analysis");
