@@ -7,16 +7,7 @@ import analysisRoutes from "./routes/Analysis.routes.js";
 const app = express();
 
 // CORS configuration for both development and production
-const allowedOrigins = [
-    "http://localhost:5173",
-    "http://localhost:8080",
-    "http://localhost:3000",
-    process.env.CLIENT_BASE_URL,
-    // Add your production domain here when deploying
-    process.env.FRONTEND_URL,
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
-].filter(Boolean);
-
+const allowedOrigins = [process.env.CLIENT_BASE_URL];
 // Security middleware
 app.use(
     helmet({
@@ -28,7 +19,21 @@ app.use(
 // CORS middleware
 app.use(
     cors({
-        origin: process.env.NODE_ENV === "production" ? allowedOrigins : true, // Allow all origins in development
+        origin: function (origin, callback) {
+            if (process.env.NODE_ENV === "production") {
+                // Allow only specific origins in production
+                if (!origin)
+                    return callback(new Error("Not allowed by CORS"), false);
+                if (allowedOrigins.includes(origin)) {
+                    callback(null, true);
+                } else {
+                    callback(new Error("Not allowed by CORS"));
+                }
+            } else {
+                // Allow all origins in development
+                callback(null, true);
+            }
+        },
         allowedHeaders: [
             "Content-Type",
             "Pragma",
