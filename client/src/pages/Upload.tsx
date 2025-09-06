@@ -1,133 +1,358 @@
-import React, { useState } from "react";
-import { UploadCloud, FileText, Loader2 } from "lucide-react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
+  Upload as UploadIcon,
+  FileText,
+  FileCheck,
+  Brain,
+  Shield,
+  ArrowRight,
+  X,
+  Save,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Navbar } from "@/components/Navbar";
+import { analysisApi } from "@/services/analysisApi";
 
-const Upload: React.FC = () => {
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+interface PreviewFile {
+  file: File;
+  url: string;
+  renamedName?: string;
+  savedName?: string;
+}
+
+const Upload = () => {
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<PreviewFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Handle file selection from input
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setUploadedFiles(Array.from(event.target.files));
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFiles(Array.from(e.dataTransfer.files));
+    }
+  }, []);
+
+  const handleFiles = (files: File[]) => {
+    const newFiles: PreviewFile[] = files.map((file) => ({
+      file,
+      url: URL.createObjectURL(file),
+      renamedName: "",
+      savedName: file.name,
+    }));
+    setUploadedFiles((prev) => [...prev, ...newFiles]);
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFiles(Array.from(e.target.files));
     }
   };
 
-  // Handle drag and drop
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    if (event.dataTransfer.files) {
-      setUploadedFiles(Array.from(event.dataTransfer.files));
-    }
+  const removeFile = (index: number) => {
+    URL.revokeObjectURL(uploadedFiles[index].url);
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
+  const handleRename = (index: number, newName: string) => {
+    setUploadedFiles((prev) =>
+      prev.map((f, i) => (i === index ? { ...f, renamedName: newName } : f))
+    );
   };
 
-  // Analyze button → send to backend
+  const handleSaveName = (index: number) => {
+    setUploadedFiles((prev) =>
+      prev.map((f, i) => {
+        if (i === index) {
+          const finalName = f.renamedName?.trim() ? f.renamedName : f.file.name;
+          return { ...f, savedName: finalName, renamedName: "" }; // clear after save
+        }
+        return f;
+      })
+    );
+  };
+
   const handleAnalyze = async () => {
-    if (uploadedFiles.length === 0) return;
-
     setIsProcessing(true);
 
     try {
-      const formData = new FormData();
-      // for now send only first file
-      formData.append("file", uploadedFiles[0]);
+      // Test with the first uploaded file
+      if (uploadedFiles.length > 0) {
+        const firstFile = uploadedFiles[0];
 
-      const res = await fetch("http://localhost:5000/api/documents/extract", {
-        method: "POST",
-        body: formData,
-        credentials: "include", // allow cookies if backend sets them
-      });
+        console.log(
+          "🧪 Testing LandingAI with file:",
+          firstFile.savedName || firstFile.file.name
+        );
 
-      if (!res.ok) {
-        throw new Error("Failed to analyze document");
+        // Call your LandingAI API
+        const result = await analysisApi.analyzeDocument({
+          file: firstFile.file,
+          customName: firstFile.savedName || firstFile.file.name,
+          includeMarginalia: true,
+          includeMetadataInMarkdown: true,
+        });
+
+        console.log("✅ LandingAI Response:", result);
+        alert(
+          `Analysis completed! Check console for details. Summary: ${result.summary || "No summary available"}`
+        );
+      } else {
+        alert("No files to analyze!");
       }
-
-      const data = await res.json();
-      console.log("✅ Extracted Data:", data);
-
-      alert("Extraction Successful! Check console for results.");
     } catch (error) {
-      console.error("❌ Error analyzing document:", error);
-      alert("Error analyzing document");
+      console.error("❌ LandingAI Error:", error);
+      alert(`Analysis failed: ${error.message}`);
     } finally {
       setIsProcessing(false);
     }
   };
 
+  useEffect(() => {
+    return () => {
+      uploadedFiles.forEach((f) => URL.revokeObjectURL(f.url));
+    };
+  }, [uploadedFiles]);
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-6">
-      <div className="w-full max-w-xl">
-        <h1 className="text-3xl font-bold text-center mb-8 text-blue-700">
-          Medical Document Analysis
-        </h1>
-
-        {/* Upload Box */}
-        <div
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          className="border-2 border-dashed border-blue-400 rounded-2xl p-10 text-center bg-white shadow-lg hover:shadow-xl transition cursor-pointer"
-        >
-          <UploadCloud className="mx-auto h-12 w-12 text-blue-500 mb-4" />
-          <p className="text-gray-600">
-            Drag and drop medical documents here, or{" "}
-            <label className="text-blue-600 font-semibold cursor-pointer hover:underline">
-              browse
-              <input
-                type="file"
-                multiple
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </label>
-          </p>
-          <p className="text-sm text-gray-400 mt-2">
-            Supported: PDF, Images (JPG, PNG)
-          </p>
-        </div>
-
-        {/* Uploaded Files Preview */}
-        {uploadedFiles.length > 0 && (
-          <div className="mt-6 bg-gray-50 p-4 rounded-lg shadow-inner">
-            <h2 className="text-lg font-semibold mb-3 text-gray-700">
-              Uploaded Files
-            </h2>
-            <ul className="space-y-2">
-              {uploadedFiles.map((file, index) => (
-                <li
-                  key={index}
-                  className="flex items-center space-x-2 text-gray-600"
-                >
-                  <FileText className="h-5 w-5 text-blue-500" />
-                  <span>{file.name}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Analyze Button */}
-        {uploadedFiles.length > 0 && (
-          <div className="mt-6 text-center">
-            <button
-              onClick={handleAnalyze}
-              disabled={isProcessing}
-              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold shadow-md hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center mx-auto"
+    <div className="min-h-screen cosmic-bg">
+      <div className="absolute inset-0 stars-pattern opacity-30"></div>
+      <Navbar />
+      <main className="pt-8 relative z-10">
+        <section className="py-12 md:py-20 relative">
+          <div className="medical-container">
+            {/* Page Title */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center mb-12"
             >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="animate-spin mr-2 h-5 w-5" />
-                  Processing...
-                </>
-              ) : (
-                "Analyze Document"
+              <h1 className="text-5xl lg:text-6xl font-bold leading-tight mb-6">
+                <span className="text-medical-title">Upload Your</span>
+                <br />
+                <span className="text-foreground">Medical Documents</span>
+              </h1>
+              <p className="text-xl text-muted-foreground leading-relaxed max-w-3xl mx-auto">
+                Securely upload your medical documents, lab reports,
+                prescriptions, and health records. Our AI will analyze them
+                instantly to provide you with clear health insights and
+                recommendations.
+              </p>
+            </motion.div>
+
+            {/* Accepted File Types */}
+            <div className="w-full bg-card border border-border rounded-lg p-4 text-center mb-12">
+              <p className="text-base text-muted-foreground font-medium">
+                Accepted file types:{" "}
+                <span className="font-semibold">PDF, JPG, PNG, DOC, DOCX</span>
+              </p>
+            </div>
+
+            {/* Upload Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="w-full max-w-2xl mx-auto space-y-8"
+            >
+              <div
+                className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300
+                ${
+                  dragActive
+                    ? "border-primary bg-primary-soft"
+                    : "border-border hover:border-primary/50 hover:bg-primary-soft/30"
+                }`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  onChange={handleFileInput}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <motion.div
+                  animate={{ scale: dragActive ? 1.05 : 1 }}
+                  className="space-y-6"
+                >
+                  <div className="w-20 h-20 bg-gradient-primary rounded-full flex items-center justify-center mx-auto shadow-glow">
+                    <UploadIcon className="w-10 h-10 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-foreground mb-2">
+                      Drop your files here
+                    </h3>
+                    <p className="text-muted-foreground mb-4">
+                      or click to browse and select files
+                    </p>
+                    <Button
+                      className="btn-medical-primary"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <UploadIcon className="w-5 h-5 mr-2" />
+                      Choose Files
+                    </Button>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Preview Section */}
+              {uploadedFiles.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="space-y-4"
+                >
+                  <h4 className="text-lg font-semibold text-foreground">
+                    Uploaded Files
+                  </h4>
+                  <div className="space-y-3">
+                    {uploadedFiles.map((pf, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex flex-col bg-card rounded-lg border border-border p-3 shadow-md"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-3">
+                            {pf.file.type.startsWith("image/") ? (
+                              <img
+                                src={pf.url}
+                                alt={pf.file.name}
+                                className="w-16 h-16 object-cover rounded-md border"
+                              />
+                            ) : pf.file.type === "application/pdf" ? (
+                              <FileText className="w-8 h-8 text-accent" />
+                            ) : (
+                              <FileCheck className="w-8 h-8 text-accent" />
+                            )}
+                            <div>
+                              <div className="font-medium text-foreground">
+                                {pf.savedName}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {(pf.file.size / 1024 / 1024).toFixed(2)} MB
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFile(index)}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+
+                        {/* Rename Input + Save */}
+                        <div className="flex space-x-2">
+                          <input
+                            type="text"
+                            placeholder={"Rename"}
+                            value={pf.renamedName || ""}
+                            onChange={(e) =>
+                              handleRename(index, e.target.value)
+                            }
+                            className="flex-1 border rounded-md px-3 py-1 text-sm text-foreground bg-background focus:ring-2 focus:ring-primary"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveName(index)}
+                            className="btn-medical-primary"
+                          >
+                            <Save className="w-4 h-4 mr-1" />
+                            Save
+                          </Button>
+                        </div>
+
+                        {pf.file.type === "application/pdf" && (
+                          <iframe
+                            src={pf.url}
+                            title={pf.file.name}
+                            className="w-full h-48 border rounded-md mt-3"
+                          />
+                        )}
+                      </motion.div>
+                    ))}
+                  </div>
+                  <Button
+                    onClick={handleAnalyze}
+                    disabled={isProcessing}
+                    className="btn-medical-primary w-full group"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                            ease: "linear",
+                          }}
+                          className="w-5 h-5 mr-2"
+                        >
+                          <Brain className="w-5 h-5" />
+                        </motion.div>
+                        Analyzing Documents...
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="w-5 h-5 mr-2" />
+                        Analyze Documents
+                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </Button>
+                </motion.div>
               )}
-            </button>
+            </motion.div>
+
+            {/* Privacy Info */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="bg-accent-soft border border-accent/30 rounded-xl p-6 mt-16"
+            >
+              <div className="flex items-start space-x-3">
+                <Shield className="w-6 h-6 text-accent flex-shrink-0 mt-1" />
+                <div>
+                  <h4 className="font-semibold text-accent mb-2">
+                    Your Privacy is Protected
+                  </h4>
+                  <p className="text-sm text-accent/80 leading-relaxed">
+                    All uploaded documents are encrypted in transit and at rest.
+                    We never store your personal medical information and all
+                    processing is HIPAA compliant. Your data is automatically
+                    deleted after analysis.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
           </div>
-        )}
-      </div>
+        </section>
+      </main>
     </div>
   );
 };

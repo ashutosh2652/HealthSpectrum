@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Brain, Shield, ArrowRight } from "lucide-react";
+import { Shield, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 
@@ -36,11 +36,16 @@ export const Navbar = ({
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center space-x-3 cursor-pointer group"
             >
-              <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform duration-300">
-                <Brain className="w-6 h-6 text-primary-foreground" />
+              <div className="w-10 h-10 overflow-hidden rounded-full shadow-glow group-hover:scale-110 transition-transform duration-300">
+                <img
+                  src="/logo2.png"
+                  alt="HealthSpectrum Logo"
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <span className="text-2xl font-bold text-foreground group-hover:text-primary-glow transition-colors">
-                HealthSpectrum
+              <span className="text-2xl font-bold flex transition-colors">
+                <span className="text-[#273fb9]">Health</span>
+                <span className="text-[#30a88e]">Spectrum</span>
               </span>
             </motion.div>
           </Link>
@@ -107,19 +112,6 @@ export const Navbar = ({
                 }`}
               >
                 Upload
-              </Button>
-            </Link>
-
-            <Link to="/insights">
-              <Button
-                variant="ghost"
-                className={`transition-colors font-medium ${
-                  !useInternalNavigation && isActive("/insights")
-                    ? "text-primary-glow bg-primary-soft border border-primary/20 rounded-lg px-4"
-                    : "text-muted-foreground hover:text-primary-glow"
-                }`}
-              >
-                Insights
               </Button>
             </Link>
 
