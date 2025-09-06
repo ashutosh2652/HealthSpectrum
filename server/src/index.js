@@ -1,5 +1,5 @@
-import { app } from "./app";
-import { connectdb, disconnectdb } from "./db";
+import { app } from "./app.js";
+import { connectdb, disconnectdb } from "./db/index.js";
 
 let server;
 connectdb()
