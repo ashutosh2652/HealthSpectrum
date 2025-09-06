@@ -110,6 +110,19 @@ export const Navbar = ({
               </Button>
             </Link>
 
+            <Link to="/PastReport">
+              <Button
+                variant="ghost"
+                className={`transition-colors font-medium ${
+                  !useInternalNavigation && isActive("/PastReport")
+                    ? "text-primary-glow bg-primary-soft border border-primary/20 rounded-lg px-4"
+                    : "text-muted-foreground hover:text-primary-glow"
+                }`}
+              >
+                Past Reports
+              </Button>
+            </Link>
+
             <Link to="/auth/sign-in">
               <Button className="btn-medical-primary group">
                 <Shield className="w-4 h-4 mr-2" />
