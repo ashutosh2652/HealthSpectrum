@@ -37,9 +37,9 @@ export const Navbar = ({
               className="flex items-center space-x-3 cursor-pointer group"
             >
               <div className="w-10 h-10 overflow-hidden rounded-full shadow-glow group-hover:scale-110 transition-transform duration-300">
-                <img 
-                  src="/logo2.png" 
-                  alt="HealthSpectrum Logo" 
+                <img
+                  src="/logo2.png"
+                  alt="HealthSpectrum Logo"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -112,19 +112,6 @@ export const Navbar = ({
                 }`}
               >
                 Upload
-              </Button>
-            </Link>
-
-            <Link to="/insights">
-              <Button
-                variant="ghost"
-                className={`transition-colors font-medium ${
-                  !useInternalNavigation && isActive("/insights")
-                    ? "text-primary-glow bg-primary-soft border border-primary/20 rounded-lg px-4"
-                    : "text-muted-foreground hover:text-primary-glow"
-                }`}
-              >
-                Insights
               </Button>
             </Link>
 

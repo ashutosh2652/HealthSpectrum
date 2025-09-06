@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
 import { motion } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import {
   FileText,
   Clock,
@@ -21,19 +22,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
-
-interface HistoryReport {
-  id: string;
-  fileName: string;
-  uploadDate: string;
-  analysisDate: string;
-  status: "completed" | "processing" | "error";
-  reportType: string;
-  riskLevel: "low" | "medium" | "high";
-  keyFindings: string[];
-  fileSize: string;
-  thumbnail?: string;
-}
+import { AnalysisResultDisplay } from "@/components/AnalysisResultDisplay";
+import { type HealthAnalysisResult } from "@/services/analysisApi";
 
 const History = () => {
   const navigate = useNavigate(); // ✅ Initialize navigate
@@ -361,14 +351,14 @@ const History = () => {
                               <span className="flex items-center">
                                 <Calendar className="w-4 h-4 mr-1" />
                                 {new Date(
-                                  report.uploadDate
+                                  report.analysisDate
                                 ).toLocaleDateString()}
                               </span>
                               <span className="flex items-center">
                                 <Activity className="w-4 h-4 mr-1" />
-                                {report.reportType}
+                                {report.reportType || "Medical Document"}
                               </span>
-                              <span>{report.fileSize}</span>
+                              <span>{report.fileSize || "Unknown size"}</span>
                             </div>
 
                             <div className="flex items-center space-x-3 mb-4">
@@ -391,32 +381,33 @@ const History = () => {
                               )}
                             </div>
 
-                            {report.keyFindings.length > 0 && (
-                              <div className="mb-4">
-                                <h4 className="text-sm font-medium text-foreground mb-2">
-                                  Key Findings:
-                                </h4>
-                                <ul className="space-y-1">
-                                  {report.keyFindings
-                                    .slice(0, 2)
-                                    .map((finding, idx) => (
-                                      <li
-                                        key={idx}
-                                        className="text-sm text-muted-foreground flex items-start"
-                                      >
-                                        <span className="w-1.5 h-1.5 bg-accent rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                                        {finding}
+                            {report.conditions &&
+                              report.conditions.length > 0 && (
+                                <div className="mb-4">
+                                  <h4 className="text-sm font-medium text-foreground mb-2">
+                                    Key Findings:
+                                  </h4>
+                                  <ul className="space-y-1">
+                                    {report.conditions
+                                      .slice(0, 2)
+                                      .map((condition, idx) => (
+                                        <li
+                                          key={idx}
+                                          className="text-sm text-muted-foreground flex items-start"
+                                        >
+                                          <span className="w-1.5 h-1.5 bg-accent rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                                          {condition.name}
+                                        </li>
+                                      ))}
+                                    {report.conditions.length > 2 && (
+                                      <li className="text-sm text-accent">
+                                        +{report.conditions.length - 2} more
+                                        findings
                                       </li>
-                                    ))}
-                                  {report.keyFindings.length > 2 && (
-                                    <li className="text-sm text-accent">
-                                      +{report.keyFindings.length - 2} more
-                                      findings
-                                    </li>
-                                  )}
-                                </ul>
-                              </div>
-                            )}
+                                    )}
+                                  </ul>
+                                </div>
+                              )}
                           </div>
                         </div>
 
@@ -465,6 +456,7 @@ const History = () => {
                           <Button
                             size="sm"
                             className="btn-medical-primary group"
+                            onClick={() => setSelectedReport(report)}
                           >
                             View Analysis
                             <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />

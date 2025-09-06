@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
+import { analysisApi } from "@/services/analysisApi";
 
 interface PreviewFile {
   file: File;
@@ -69,9 +70,7 @@ const Upload = () => {
 
   const handleRename = (index: number, newName: string) => {
     setUploadedFiles((prev) =>
-      prev.map((f, i) =>
-        i === index ? { ...f, renamedName: newName } : f
-      )
+      prev.map((f, i) => (i === index ? { ...f, renamedName: newName } : f))
     );
   };
 
@@ -79,9 +78,7 @@ const Upload = () => {
     setUploadedFiles((prev) =>
       prev.map((f, i) => {
         if (i === index) {
-          const finalName = f.renamedName?.trim()
-            ? f.renamedName
-            : f.file.name;
+          const finalName = f.renamedName?.trim() ? f.renamedName : f.file.name;
           return { ...f, savedName: finalName, renamedName: "" }; // clear after save
         }
         return f;
@@ -89,17 +86,40 @@ const Upload = () => {
     );
   };
 
-
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
 
-      // Example: log final saved names
-      uploadedFiles.forEach((f) => {
-        console.log("Final saved name:", f.savedName);
-      });
-    }, 3000);
+    try {
+      // Test with the first uploaded file
+      if (uploadedFiles.length > 0) {
+        const firstFile = uploadedFiles[0];
+
+        console.log(
+          "🧪 Testing LandingAI with file:",
+          firstFile.savedName || firstFile.file.name
+        );
+
+        // Call your LandingAI API
+        const result = await analysisApi.analyzeDocument({
+          file: firstFile.file,
+          customName: firstFile.savedName || firstFile.file.name,
+          includeMarginalia: true,
+          includeMetadataInMarkdown: true,
+        });
+
+        console.log("✅ LandingAI Response:", result);
+        alert(
+          `Analysis completed! Check console for details. Summary: ${result.summary || "No summary available"}`
+        );
+      } else {
+        alert("No files to analyze!");
+      }
+    } catch (error) {
+      console.error("❌ LandingAI Error:", error);
+      alert(`Analysis failed: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   useEffect(() => {
