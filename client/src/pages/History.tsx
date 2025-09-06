@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
 import { motion } from "framer-motion";
 import {
   FileText,
@@ -6,7 +7,6 @@ import {
   Eye,
   Download,
   Search,
-  Filter,
   Calendar,
   Activity,
   AlertCircle,
@@ -15,7 +15,6 @@ import {
   Brain,
   ArrowRight,
   MoreVertical,
-  Trash2,
   Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,12 +36,13 @@ interface HistoryReport {
 }
 
 const History = () => {
+  const navigate = useNavigate(); // ✅ Initialize navigate
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
 
   // Mock data - replace with actual API call
-  const [reports, setReports] = useState<HistoryReport[]>([
+  const [reports] = useState<HistoryReport[]>([
     {
       id: "1",
       fileName: "Blood_Test_Results_Jan2024.pdf",
@@ -101,7 +101,8 @@ const History = () => {
     },
   ]);
 
-  const getStatusIcon = (status: string) => {
+  // Status icon
+  const getStatusIcon = (status: HistoryReport["status"]) => {
     switch (status) {
       case "completed":
         return <CheckCircle className="w-5 h-5 text-green-500" />;
@@ -114,7 +115,8 @@ const History = () => {
     }
   };
 
-  const getRiskBadgeColor = (riskLevel: string) => {
+  // Risk badge style
+  const getRiskBadgeColor = (riskLevel: HistoryReport["riskLevel"]) => {
     switch (riskLevel) {
       case "low":
         return "bg-green-100 text-green-800 border-green-200";
@@ -127,15 +129,43 @@ const History = () => {
     }
   };
 
-  const filteredReports = reports.filter((report) => {
-    const matchesSearch =
-      report.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.reportType.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter =
-      filterStatus === "all" || report.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  // Filter + sort
+  const filteredReports = useMemo(() => {
+    let result = reports.filter((report) => {
+      const matchesSearch =
+        report.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        report.reportType.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesFilter =
+        filterStatus === "all" || report.status === filterStatus;
+      return matchesSearch && matchesFilter;
+    });
 
+    if (sortBy === "newest") {
+      result = [...result].sort(
+        (a, b) =>
+          new Date(b.uploadDate).getTime() -
+          new Date(a.uploadDate).getTime()
+      );
+    } else if (sortBy === "oldest") {
+      result = [...result].sort(
+        (a, b) =>
+          new Date(a.uploadDate).getTime() -
+          new Date(b.uploadDate).getTime()
+      );
+    } else if (sortBy === "name") {
+      result = [...result].sort((a, b) =>
+        a.fileName.localeCompare(b.fileName)
+      );
+    } else if (sortBy === "type") {
+      result = [...result].sort((a, b) =>
+        a.reportType.localeCompare(b.reportType)
+      );
+    }
+
+    return result;
+  }, [reports, searchTerm, filterStatus, sortBy]);
+
+  // Stats
   const stats = [
     {
       title: "Total Reports",
@@ -210,7 +240,7 @@ const History = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
-                  className="card-medical-glow p-6"
+                  className="p-6 rounded-xl bg-background/80 border border-border shadow-md hover:shadow-lg transition"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -299,7 +329,10 @@ const History = () => {
                       ? "Try adjusting your search or filter criteria."
                       : "Upload your first medical document to get started with AI analysis."}
                   </p>
-                  <Button className="btn-medical-primary">
+                  <Button
+                    className="btn-medical-primary"
+                    onClick={() => navigate("/upload")} // ✅ SPA navigation
+                  >
                     <Brain className="w-5 h-5 mr-2" />
                     Upload New Document
                   </Button>
@@ -349,7 +382,9 @@ const History = () => {
                               {report.status === "completed" && (
                                 <Badge
                                   variant="outline"
-                                  className={`${getRiskBadgeColor(report.riskLevel)} capitalize`}
+                                  className={`${getRiskBadgeColor(
+                                    report.riskLevel
+                                  )} capitalize`}
                                 >
                                   {report.riskLevel} Risk
                                 </Badge>
