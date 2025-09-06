@@ -22,4 +22,18 @@ router.get("/analysis/:id", (req, res) => {
     res.status(404).json({ error: "Analysis not found" });
 });
 
+// GET /api/test - Test API key configuration
+router.get("/test", (req, res) => {
+    const hasApiKey = !!process.env.LANDING_AI_API_KEY;
+    const apiKeyLength = process.env.LANDING_AI_API_KEY?.length || 0;
+
+    res.json({
+        status: "ok",
+        apiKeyConfigured: hasApiKey,
+        apiKeyLength: apiKeyLength,
+        endpoint: process.env.LANDING_AI_EU_ENDPOINT === "true" ? "EU" : "US",
+        message: hasApiKey ? "API key is configured" : "API key is missing",
+    });
+});
+
 export default router;

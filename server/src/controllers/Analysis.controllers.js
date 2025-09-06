@@ -58,7 +58,25 @@ const LANDING_AI_API_URL =
         ? "https://api.va.eu-west-1.landing.ai/v1/tools/agentic-document-analysis"
         : "https://api.va.landing.ai/v1/tools/agentic-document-analysis";
 
-const LANDING_AI_API_KEY = process.env.LANDING_AI_API_KEY;
+// Handle API key - check if it's base64 encoded
+let LANDING_AI_API_KEY = process.env.LANDING_AI_API_KEY;
+
+// If the API key looks like base64, try to decode it
+if (
+    LANDING_AI_API_KEY &&
+    LANDING_AI_API_KEY.length > 20 &&
+    !LANDING_AI_API_KEY.includes(":")
+) {
+    try {
+        const decoded = Buffer.from(LANDING_AI_API_KEY, "base64").toString(
+            "utf-8"
+        );
+        console.log("🔑 Decoded API key from base64");
+        LANDING_AI_API_KEY = decoded;
+    } catch (error) {
+        console.log("🔑 API key is not base64 encoded, using as-is");
+    }
+}
 
 // Helper function to parse medical insights from markdown
 function parseMedicalInsights(markdown, extractedSchema) {
@@ -220,6 +238,17 @@ export const analyzeDocument = async (req, res) => {
             });
         }
 
+        // Debug API key
+        console.log("🔑 API Key length:", LANDING_AI_API_KEY.length);
+        console.log(
+            "🔑 API Key first 10 chars:",
+            LANDING_AI_API_KEY.substring(0, 10)
+        );
+        console.log(
+            "🔑 API Key last 10 chars:",
+            LANDING_AI_API_KEY.substring(LANDING_AI_API_KEY.length - 10)
+        );
+
         const file = req.file;
         const {
             customName,
@@ -266,10 +295,22 @@ export const analyzeDocument = async (req, res) => {
         }
 
         // Call LandingAI API
+        console.log("🚀 Calling LandingAI API:", LANDING_AI_API_URL);
+
+        // Clean and validate API key
+        const cleanApiKey = LANDING_AI_API_KEY.trim();
+        const authHeader = `Bearer ${cleanApiKey}`;
+
+        console.log("🔑 Auth header length:", authHeader.length);
+        console.log(
+            "🔑 Auth header preview:",
+            authHeader.substring(0, 20) + "..."
+        );
+
         const landingAIResponse = await fetch(LANDING_AI_API_URL, {
             method: "POST",
             headers: {
-                Authorization: `Bearer ${LANDING_AI_API_KEY}`,
+                Authorization: authHeader,
                 ...formData.getHeaders(),
             },
             body: formData,
@@ -277,9 +318,24 @@ export const analyzeDocument = async (req, res) => {
 
         if (!landingAIResponse.ok) {
             const errorText = await landingAIResponse.text();
-            console.error("LandingAI API Error:", errorText);
+            console.error(
+                "❌ LandingAI API Error Response:",
+                landingAIResponse.status,
+                landingAIResponse.statusText
+            );
+            console.error("❌ LandingAI API Error Body:", errorText);
+
+            // Check if it's an authentication error
+            if (landingAIResponse.status === 401) {
+                return res.status(500).json({
+                    error: "LandingAI API authentication failed",
+                    message: "Invalid API key or authentication issue",
+                    details: errorText,
+                });
+            }
+
             throw new Error(
-                `LandingAI API failed: ${landingAIResponse.status} ${landingAIResponse.statusText}`
+                `LandingAI API failed: ${landingAIResponse.status} ${landingAIResponse.statusText} - ${errorText}`
             );
         }
 
