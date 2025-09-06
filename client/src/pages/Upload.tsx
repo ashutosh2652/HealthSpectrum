@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   Upload as UploadIcon,
   FileText,
@@ -10,17 +11,71 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Zap,
   ArrowRight,
   X,
+  Edit2,
+  Eye,
+  File,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Navbar } from "@/components/Navbar";
+import { analysisApi, type HealthAnalysisResult } from "@/services/analysisApi";
+
+interface UploadedFile extends File {
+  id: string;
+  customName?: string;
+  url?: string;
+  preview?: string;
+  analysisResult?: HealthAnalysisResult;
+  progress?: number;
+  status?: "uploading" | "analyzing" | "completed" | "error";
+  error?: string;
+  type: string; // Explicitly ensure type is always defined
+}
 
 const Upload = () => {
+  const navigate = useNavigate();
   const [dragActive, setDragActive] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [editingNameId, setEditingNameId] = useState<string | null>(null);
+  const [tempName, setTempName] = useState("");
+  const [analysisResults, setAnalysisResults] = useState<
+    HealthAnalysisResult[]
+  >([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const generateFileId = () => Math.random().toString(36).substr(2, 9);
+
+  const createFilePreview = (file: File): Promise<string | null> => {
+    return new Promise((resolve) => {
+      if (file.type && file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(file);
+      } else {
+        resolve(null);
+      }
+    });
+  };
+
+  // Clean up object URLs when component unmounts or files change
+  useEffect(() => {
+    return () => {
+      uploadedFiles.forEach((file) => {
+        if (file.url) {
+          URL.revokeObjectURL(file.url);
+        }
+      });
+    };
+  }, [uploadedFiles]);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -32,35 +87,199 @@ const Upload = () => {
     }
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleFiles = async (files: File[]) => {
+    const processedFiles = await Promise.all(
+      files.map(async (file) => {
+        const preview = await createFilePreview(file);
+        const url = URL.createObjectURL(file);
+        return {
+          ...file,
+          id: generateFileId(),
+          customName: file.name.split(".")[0], // Remove extension for default name
+          preview,
+          url,
+          type: file.type || "application/octet-stream", // Ensure type is always defined
+        } as UploadedFile;
+      })
+    );
+    setUploadedFiles((prev) => [...prev, ...processedFiles]);
+  };
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const files = Array.from(e.dataTransfer.files);
-      setUploadedFiles((prev) => [...prev, ...files]);
+      await handleFiles(Array.from(e.dataTransfer.files));
     }
   }, []);
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const files = Array.from(e.target.files);
-      setUploadedFiles((prev) => [...prev, ...files]);
+      await handleFiles(Array.from(e.target.files));
     }
+    // Reset input value to allow selecting the same file again
+    e.target.value = "";
   };
 
-  const removeFile = (index: number) => {
-    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  const removeFile = (id: string) => {
+    const fileToRemove = uploadedFiles.find((file) => file.id === id);
+    if (fileToRemove?.url) {
+      URL.revokeObjectURL(fileToRemove.url);
+    }
+    setUploadedFiles((prev) => prev.filter((file) => file.id !== id));
   };
 
-  const handleAnalyze = () => {
+  const startEditingName = (id: string, currentName: string) => {
+    setEditingNameId(id);
+    setTempName(currentName);
+  };
+
+  const saveFileName = (id: string) => {
+    setUploadedFiles((prev) =>
+      prev.map((file) =>
+        file.id === id ? { ...file, customName: tempName || file.name } : file
+      )
+    );
+    setEditingNameId(null);
+    setTempName("");
+  };
+
+  const cancelEditingName = () => {
+    setEditingNameId(null);
+    setTempName("");
+  };
+
+  const getFileIcon = (file: UploadedFile) => {
+    if (!file.type) return File;
+    if (file.type.startsWith("image/")) return Image;
+    if (file.type === "application/pdf") return FileText;
+    return File;
+  };
+
+  const handleAnalyze = async () => {
+    if (uploadedFiles.length === 0) return;
+
     setIsProcessing(true);
-    // Simulate processing time
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      const results: HealthAnalysisResult[] = [];
+
+      // Process files one by one to show individual progress
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        const file = uploadedFiles[i];
+
+        // Update file status to analyzing
+        setUploadedFiles((prev) =>
+          prev.map((f) =>
+            f.id === file.id
+              ? { ...f, status: "analyzing" as const, progress: 0 }
+              : f
+          )
+        );
+
+        try {
+          // Call our analysis API
+          const result = await analysisApi.analyzeDocument({
+            file: file as File,
+            customName: file.customName || file.name,
+            includeMarginalia: true,
+            includeMetadataInMarkdown: true,
+            // Optional: Add medical-specific field schema
+            fieldsSchema: {
+              type: "object",
+              properties: {
+                conditions: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string" },
+                      severity: { type: "string" },
+                      evidence: { type: "array", items: { type: "string" } },
+                    },
+                  },
+                },
+                medications: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string" },
+                      dosage: { type: "string" },
+                      frequency: { type: "string" },
+                    },
+                  },
+                },
+                vital_signs: {
+                  type: "object",
+                  properties: {
+                    blood_pressure: { type: "string" },
+                    heart_rate: { type: "string" },
+                    temperature: { type: "string" },
+                    weight: { type: "string" },
+                  },
+                },
+              },
+            },
+          });
+
+          results.push(result);
+
+          // Update file status to completed
+          setUploadedFiles((prev) =>
+            prev.map((f) =>
+              f.id === file.id
+                ? {
+                    ...f,
+                    status: "completed" as const,
+                    progress: 100,
+                    analysisResult: result,
+                  }
+                : f
+            )
+          );
+        } catch (fileError) {
+          // Update file status to error
+          setUploadedFiles((prev) =>
+            prev.map((f) =>
+              f.id === file.id
+                ? {
+                    ...f,
+                    status: "error" as const,
+                    error:
+                      fileError instanceof Error
+                        ? fileError.message
+                        : "Analysis failed",
+                  }
+                : f
+            )
+          );
+        }
+      }
+
+      if (results.length > 0) {
+        setAnalysisResults(results);
+
+        // Store results in localStorage for the history page
+        const existingResults = JSON.parse(
+          localStorage.getItem("analysisHistory") || "[]"
+        );
+        localStorage.setItem(
+          "analysisHistory",
+          JSON.stringify([...existingResults, ...results])
+        );
+
+        // Navigate to history page to show results
+        navigate("/history", { state: { newResults: results } });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Analysis failed");
+    } finally {
       setIsProcessing(false);
-      // Here you would typically navigate to results or show analysis
-    }, 3000);
+    }
   };
 
   const acceptedFormats = [
@@ -129,6 +348,19 @@ const Upload = () => {
               </p>
             </motion.div>
 
+            {/* Accepted File Types Banner */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="w-full max-w-2xl mx-auto bg-card border border-border rounded-lg p-4 text-center mb-12"
+            >
+              <p className="text-base text-muted-foreground font-medium">
+                Accepted file types:{" "}
+                <span className="font-semibold">PDF, JPG, PNG, DOC, DOCX</span>
+              </p>
+            </motion.div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
               {/* Upload Section */}
               <motion.div
@@ -137,6 +369,14 @@ const Upload = () => {
                 transition={{ delay: 0.2 }}
                 className="space-y-8"
               >
+                {/* Error Alert */}
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
                 {/* Upload Area */}
                 <div className="card-medical-glow">
                   <div
@@ -153,6 +393,15 @@ const Upload = () => {
                     onDragOver={handleDrag}
                     onDrop={handleDrop}
                   >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                      onChange={handleFileInput}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      id="file-upload"
+                    />
                     <motion.div
                       animate={{ scale: dragActive ? 1.05 : 1 }}
                       className="space-y-6"
@@ -169,52 +418,15 @@ const Upload = () => {
                           or click to browse and select files
                         </p>
 
-                        <input
-                          type="file"
-                          multiple
-                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                          onChange={handleFileInput}
-                          className="hidden"
-                          id="file-upload"
-                        />
-                        <label htmlFor="file-upload">
-                          <Button className="btn-medical-primary cursor-pointer">
-                            <UploadIcon className="w-5 h-5 mr-2" />
-                            Choose Files
-                          </Button>
-                        </label>
+                        <Button
+                          className="btn-medical-primary cursor-pointer"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <UploadIcon className="w-5 h-5 mr-2" />
+                          Choose Files
+                        </Button>
                       </div>
                     </motion.div>
-                  </div>
-                </div>
-
-                {/* Accepted Formats */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-foreground">
-                    Accepted File Types
-                  </h4>
-                  <div className="grid grid-cols-1 gap-3">
-                    {acceptedFormats.map((format, index) => (
-                      <motion.div
-                        key={format.name}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.4 + index * 0.1 }}
-                        className="flex items-center space-x-4 p-4 bg-muted/30 rounded-xl border border-border/50"
-                      >
-                        <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
-                          <format.icon className="w-5 h-5 text-accent" />
-                        </div>
-                        <div>
-                          <div className="font-medium text-foreground">
-                            {format.name}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {format.desc}
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
                   </div>
                 </div>
 
@@ -226,37 +438,207 @@ const Upload = () => {
                     className="space-y-4"
                   >
                     <h4 className="text-lg font-semibold text-foreground">
-                      Uploaded Files
+                      Uploaded Files ({uploadedFiles.length})
                     </h4>
-                    <div className="space-y-2">
-                      {uploadedFiles.map((file, index) => (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className="flex items-center justify-between p-3 bg-card rounded-lg border border-border"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <FileCheck className="w-5 h-5 text-accent" />
-                            <div>
-                              <div className="font-medium text-foreground">
-                                {file.name}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                {(file.size / 1024 / 1024).toFixed(2)} MB
-                              </div>
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFile(index)}
-                            className="text-muted-foreground hover:text-destructive"
+                    <div className="space-y-4">
+                      {uploadedFiles.map((file, index) => {
+                        const FileIcon = getFileIcon(file);
+                        return (
+                          <motion.div
+                            key={file.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className="card-medical p-4 border border-border hover:border-primary/30 transition-all duration-300"
                           >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </motion.div>
-                      ))}
+                            <div className="flex items-start space-x-4">
+                              {/* File Preview/Icon */}
+                              <div className="flex-shrink-0">
+                                {file.preview ? (
+                                  <div className="w-16 h-16 rounded-lg overflow-hidden border border-border">
+                                    <img
+                                      src={file.preview}
+                                      alt={file.customName || file.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="w-16 h-16 bg-accent/20 rounded-lg flex items-center justify-center">
+                                    <FileIcon className="w-8 h-8 text-accent" />
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* File Details */}
+                              <div className="flex-1 min-w-0">
+                                {/* Editable File Name */}
+                                <div className="mb-2">
+                                  {editingNameId === file.id ? (
+                                    <div className="flex items-center space-x-2">
+                                      <Input
+                                        value={tempName}
+                                        onChange={(e) =>
+                                          setTempName(e.target.value)
+                                        }
+                                        className="flex-1 h-8 text-sm"
+                                        placeholder="Enter report name"
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter")
+                                            saveFileName(file.id);
+                                          if (e.key === "Escape")
+                                            cancelEditingName();
+                                        }}
+                                        autoFocus
+                                      />
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => saveFileName(file.id)}
+                                        className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                                      >
+                                        <CheckCircle className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={cancelEditingName}
+                                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center space-x-2 group">
+                                      <h5 className="font-semibold text-foreground truncate">
+                                        {file.customName || file.name}
+                                      </h5>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() =>
+                                          startEditingName(
+                                            file.id,
+                                            file.customName || file.name
+                                          )
+                                        }
+                                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      >
+                                        <Edit2 className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* File Info */}
+                                <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
+                                  <span>Original: {file.name}</span>
+                                  <span>
+                                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                                  </span>
+                                  <span className="capitalize">
+                                    {file.type
+                                      ? file.type.split("/")[1] || "Unknown"
+                                      : "Unknown"}
+                                  </span>
+                                </div>
+
+                                {/* File Actions and Progress */}
+                                <div className="space-y-2">
+                                  {/* Progress Bar during analysis */}
+                                  {file.status === "analyzing" && (
+                                    <div className="space-y-1">
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span className="text-muted-foreground">
+                                          Analyzing document...
+                                        </span>
+                                        <span className="text-muted-foreground">
+                                          {file.progress || 0}%
+                                        </span>
+                                      </div>
+                                      <Progress
+                                        value={file.progress || 0}
+                                        className="h-1"
+                                      />
+                                    </div>
+                                  )}
+
+                                  {/* Error display */}
+                                  {file.status === "error" && file.error && (
+                                    <Alert
+                                      variant="destructive"
+                                      className="py-2"
+                                    >
+                                      <AlertCircle className="h-3 w-3" />
+                                      <AlertDescription className="text-xs">
+                                        {file.error}
+                                      </AlertDescription>
+                                    </Alert>
+                                  )}
+
+                                  <div className="flex items-center space-x-2">
+                                    {file.url && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 text-xs"
+                                        onClick={() =>
+                                          window.open(file.url, "_blank")
+                                        }
+                                      >
+                                        <Eye className="w-3 h-3 mr-1" />
+                                        Preview
+                                      </Button>
+                                    )}
+
+                                    {file.status === "completed" ? (
+                                      <span className="text-xs text-green-600 flex items-center">
+                                        <CheckCircle className="w-3 h-3 mr-1" />
+                                        Analysis complete
+                                      </span>
+                                    ) : file.status === "error" ? (
+                                      <span className="text-xs text-red-600 flex items-center">
+                                        <AlertCircle className="w-3 h-3 mr-1" />
+                                        Analysis failed
+                                      </span>
+                                    ) : file.status === "analyzing" ? (
+                                      <span className="text-xs text-blue-600 flex items-center">
+                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                        Analyzing...
+                                      </span>
+                                    ) : (
+                                      <span className="text-xs text-green-600 flex items-center">
+                                        <CheckCircle className="w-3 h-3 mr-1" />
+                                        Ready for analysis
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Remove Button */}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeFile(file.id)}
+                                className="text-muted-foreground hover:text-destructive flex-shrink-0"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+
+                            {/* PDF Preview */}
+                            {file.type === "application/pdf" && file.url && (
+                              <div className="mt-4">
+                                <iframe
+                                  src={file.url}
+                                  title={file.customName || file.name}
+                                  className="w-full h-48 border rounded-md"
+                                />
+                              </div>
+                            )}
+                          </motion.div>
+                        );
+                      })}
                     </div>
 
                     <Button
@@ -277,12 +659,14 @@ const Upload = () => {
                           >
                             <Brain className="w-5 h-5" />
                           </motion.div>
-                          Analyzing Documents...
+                          Analyzing {uploadedFiles.length} Document
+                          {uploadedFiles.length > 1 ? "s" : ""}...
                         </>
                       ) : (
                         <>
                           <Brain className="w-5 h-5 mr-2" />
-                          Analyze Documents
+                          Analyze {uploadedFiles.length} Document
+                          {uploadedFiles.length > 1 ? "s" : ""}
                           <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                         </>
                       )}
@@ -329,31 +713,31 @@ const Upload = () => {
                     </motion.div>
                   ))}
                 </div>
-
-                {/* Security Notice */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.9 }}
-                  className="bg-accent-soft border border-accent/30 rounded-xl p-6"
-                >
-                  <div className="flex items-start space-x-3">
-                    <Shield className="w-6 h-6 text-accent flex-shrink-0 mt-1" />
-                    <div>
-                      <h4 className="font-semibold text-accent mb-2">
-                        Your Privacy is Protected
-                      </h4>
-                      <p className="text-sm text-accent/80 leading-relaxed">
-                        All uploaded documents are encrypted in transit and at
-                        rest. We never store your personal medical information
-                        and all processing is HIPAA compliant. Your data is
-                        automatically deleted after analysis.
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
               </motion.div>
             </div>
+
+            {/* Security Notice */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9 }}
+              className="bg-accent-soft border border-accent/30 rounded-xl p-6 mt-16"
+            >
+              <div className="flex items-start space-x-3">
+                <Shield className="w-6 h-6 text-accent flex-shrink-0 mt-1" />
+                <div>
+                  <h4 className="font-semibold text-accent mb-2">
+                    Your Privacy is Protected
+                  </h4>
+                  <p className="text-sm text-accent/80 leading-relaxed">
+                    All uploaded documents are encrypted in transit and at rest.
+                    We never store your personal medical information and all
+                    processing is HIPAA compliant. Your data is automatically
+                    deleted after analysis.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </section>
       </main>
