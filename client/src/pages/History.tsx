@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
 import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import {
@@ -7,7 +8,6 @@ import {
   Eye,
   Download,
   Search,
-  Filter,
   Calendar,
   Activity,
   AlertCircle,
@@ -16,7 +16,6 @@ import {
   Brain,
   ArrowRight,
   MoreVertical,
-  Trash2,
   Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,56 +26,73 @@ import { AnalysisResultDisplay } from "@/components/AnalysisResultDisplay";
 import { type HealthAnalysisResult } from "@/services/analysisApi";
 
 const History = () => {
-  const location = useLocation();
+  const navigate = useNavigate(); // ✅ Initialize navigate
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
-  const [reports, setReports] = useState<HealthAnalysisResult[]>([]);
-  const [selectedReport, setSelectedReport] =
-    useState<HealthAnalysisResult | null>(null);
 
-  // Load reports from localStorage and handle new results from navigation state
-  useEffect(() => {
-    const loadReports = () => {
-      const storedReports = JSON.parse(
-        localStorage.getItem("analysisHistory") || "[]"
-      );
+  // Mock data - replace with actual API call
+  const [reports] = useState<HistoryReport[]>([
+    {
+      id: "1",
+      fileName: "Blood_Test_Results_Jan2024.pdf",
+      uploadDate: "2024-01-15",
+      analysisDate: "2024-01-15",
+      status: "completed",
+      reportType: "Blood Test",
+      riskLevel: "low",
+      keyFindings: [
+        "Normal cholesterol levels",
+        "Slightly low Vitamin D",
+        "Healthy blood sugar",
+      ],
+      fileSize: "2.3 MB",
+    },
+    {
+      id: "2",
+      fileName: "MRI_Scan_Dec2023.pdf",
+      uploadDate: "2023-12-20",
+      analysisDate: "2023-12-20",
+      status: "completed",
+      reportType: "MRI Scan",
+      riskLevel: "medium",
+      keyFindings: [
+        "Minor disc degeneration",
+        "No tumors detected",
+        "Follow-up recommended",
+      ],
+      fileSize: "5.7 MB",
+    },
+    {
+      id: "3",
+      fileName: "Prescription_Analysis.jpg",
+      uploadDate: "2023-11-08",
+      analysisDate: "2023-11-08",
+      status: "completed",
+      reportType: "Prescription",
+      riskLevel: "low",
+      keyFindings: [
+        "Valid prescription format",
+        "No drug interactions",
+        "Dosage appropriate",
+      ],
+      fileSize: "1.2 MB",
+    },
+    {
+      id: "4",
+      fileName: "X_Ray_Chest_Oct2023.pdf",
+      uploadDate: "2023-10-25",
+      analysisDate: "2023-10-25",
+      status: "processing",
+      reportType: "X-Ray",
+      riskLevel: "medium",
+      keyFindings: [],
+      fileSize: "3.1 MB",
+    },
+  ]);
 
-      // If there are new results from navigation, add them
-      if (location.state?.newResults) {
-        const newResults = location.state.newResults as HealthAnalysisResult[];
-        const allReports = [...storedReports, ...newResults];
-        setReports(allReports);
-        localStorage.setItem("analysisHistory", JSON.stringify(allReports));
-
-        // Clear the navigation state
-        window.history.replaceState({}, document.title);
-      } else {
-        setReports(storedReports);
-      }
-    };
-
-    loadReports();
-  }, [location.state]);
-
-  const filteredReports = reports.filter((report) => {
-    const matchesSearch =
-      report.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.customName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (report.reportType &&
-        report.reportType.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesFilter =
-      filterStatus === "all" || report.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
-
-  const deleteReport = (id: string) => {
-    const updatedReports = reports.filter((report) => report.id !== id);
-    setReports(updatedReports);
-    localStorage.setItem("analysisHistory", JSON.stringify(updatedReports));
-  };
-
-  const getStatusIcon = (status: string) => {
+  // Status icon
+  const getStatusIcon = (status: HistoryReport["status"]) => {
     switch (status) {
       case "completed":
         return <CheckCircle className="w-5 h-5 text-green-500" />;
@@ -89,7 +105,8 @@ const History = () => {
     }
   };
 
-  const getRiskBadgeColor = (riskLevel: string) => {
+  // Risk badge style
+  const getRiskBadgeColor = (riskLevel: HistoryReport["riskLevel"]) => {
     switch (riskLevel) {
       case "low":
         return "bg-green-100 text-green-800 border-green-200";
@@ -102,22 +119,43 @@ const History = () => {
     }
   };
 
-  // If a report is selected, show the detailed view
-  if (selectedReport) {
-    return (
-      <div className="min-h-screen cosmic-bg">
-        <div className="absolute inset-0 stars-pattern opacity-30"></div>
-        <Navbar />
-        <main className="pt-24 relative z-10">
-          <AnalysisResultDisplay
-            result={selectedReport}
-            onClose={() => setSelectedReport(null)}
-          />
-        </main>
-      </div>
-    );
-  }
+  // Filter + sort
+  const filteredReports = useMemo(() => {
+    let result = reports.filter((report) => {
+      const matchesSearch =
+        report.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        report.reportType.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesFilter =
+        filterStatus === "all" || report.status === filterStatus;
+      return matchesSearch && matchesFilter;
+    });
 
+    if (sortBy === "newest") {
+      result = [...result].sort(
+        (a, b) =>
+          new Date(b.uploadDate).getTime() -
+          new Date(a.uploadDate).getTime()
+      );
+    } else if (sortBy === "oldest") {
+      result = [...result].sort(
+        (a, b) =>
+          new Date(a.uploadDate).getTime() -
+          new Date(b.uploadDate).getTime()
+      );
+    } else if (sortBy === "name") {
+      result = [...result].sort((a, b) =>
+        a.fileName.localeCompare(b.fileName)
+      );
+    } else if (sortBy === "type") {
+      result = [...result].sort((a, b) =>
+        a.reportType.localeCompare(b.reportType)
+      );
+    }
+
+    return result;
+  }, [reports, searchTerm, filterStatus, sortBy]);
+
+  // Stats
   const stats = [
     {
       title: "Total Reports",
@@ -192,7 +230,7 @@ const History = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
-                  className="card-medical-glow p-6"
+                  className="p-6 rounded-xl bg-background/80 border border-border shadow-md hover:shadow-lg transition"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -281,7 +319,10 @@ const History = () => {
                       ? "Try adjusting your search or filter criteria."
                       : "Upload your first medical document to get started with AI analysis."}
                   </p>
-                  <Button className="btn-medical-primary">
+                  <Button
+                    className="btn-medical-primary"
+                    onClick={() => navigate("/upload")} // ✅ SPA navigation
+                  >
                     <Brain className="w-5 h-5 mr-2" />
                     Upload New Document
                   </Button>
@@ -331,7 +372,9 @@ const History = () => {
                               {report.status === "completed" && (
                                 <Badge
                                   variant="outline"
-                                  className={`${getRiskBadgeColor(report.riskLevel)} capitalize`}
+                                  className={`${getRiskBadgeColor(
+                                    report.riskLevel
+                                  )} capitalize`}
                                 >
                                   {report.riskLevel} Risk
                                 </Badge>
