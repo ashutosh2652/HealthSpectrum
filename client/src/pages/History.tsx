@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import {
   FileText,
   Clock,
@@ -22,84 +23,58 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
-
-interface HistoryReport {
-  id: string;
-  fileName: string;
-  uploadDate: string;
-  analysisDate: string;
-  status: "completed" | "processing" | "error";
-  reportType: string;
-  riskLevel: "low" | "medium" | "high";
-  keyFindings: string[];
-  fileSize: string;
-  thumbnail?: string;
-}
+import { AnalysisResultDisplay } from "@/components/AnalysisResultDisplay";
+import { type HealthAnalysisResult } from "@/services/analysisApi";
 
 const History = () => {
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+  const [reports, setReports] = useState<HealthAnalysisResult[]>([]);
+  const [selectedReport, setSelectedReport] =
+    useState<HealthAnalysisResult | null>(null);
 
-  // Mock data - replace with actual API call
-  const [reports, setReports] = useState<HistoryReport[]>([
-    {
-      id: "1",
-      fileName: "Blood_Test_Results_Jan2024.pdf",
-      uploadDate: "2024-01-15",
-      analysisDate: "2024-01-15",
-      status: "completed",
-      reportType: "Blood Test",
-      riskLevel: "low",
-      keyFindings: [
-        "Normal cholesterol levels",
-        "Slightly low Vitamin D",
-        "Healthy blood sugar",
-      ],
-      fileSize: "2.3 MB",
-    },
-    {
-      id: "2",
-      fileName: "MRI_Scan_Dec2023.pdf",
-      uploadDate: "2023-12-20",
-      analysisDate: "2023-12-20",
-      status: "completed",
-      reportType: "MRI Scan",
-      riskLevel: "medium",
-      keyFindings: [
-        "Minor disc degeneration",
-        "No tumors detected",
-        "Follow-up recommended",
-      ],
-      fileSize: "5.7 MB",
-    },
-    {
-      id: "3",
-      fileName: "Prescription_Analysis.jpg",
-      uploadDate: "2023-11-08",
-      analysisDate: "2023-11-08",
-      status: "completed",
-      reportType: "Prescription",
-      riskLevel: "low",
-      keyFindings: [
-        "Valid prescription format",
-        "No drug interactions",
-        "Dosage appropriate",
-      ],
-      fileSize: "1.2 MB",
-    },
-    {
-      id: "4",
-      fileName: "X_Ray_Chest_Oct2023.pdf",
-      uploadDate: "2023-10-25",
-      analysisDate: "2023-10-25",
-      status: "processing",
-      reportType: "X-Ray",
-      riskLevel: "medium",
-      keyFindings: [],
-      fileSize: "3.1 MB",
-    },
-  ]);
+  // Load reports from localStorage and handle new results from navigation state
+  useEffect(() => {
+    const loadReports = () => {
+      const storedReports = JSON.parse(
+        localStorage.getItem("analysisHistory") || "[]"
+      );
+
+      // If there are new results from navigation, add them
+      if (location.state?.newResults) {
+        const newResults = location.state.newResults as HealthAnalysisResult[];
+        const allReports = [...storedReports, ...newResults];
+        setReports(allReports);
+        localStorage.setItem("analysisHistory", JSON.stringify(allReports));
+
+        // Clear the navigation state
+        window.history.replaceState({}, document.title);
+      } else {
+        setReports(storedReports);
+      }
+    };
+
+    loadReports();
+  }, [location.state]);
+
+  const filteredReports = reports.filter((report) => {
+    const matchesSearch =
+      report.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.customName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (report.reportType &&
+        report.reportType.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesFilter =
+      filterStatus === "all" || report.status === filterStatus;
+    return matchesSearch && matchesFilter;
+  });
+
+  const deleteReport = (id: string) => {
+    const updatedReports = reports.filter((report) => report.id !== id);
+    setReports(updatedReports);
+    localStorage.setItem("analysisHistory", JSON.stringify(updatedReports));
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -127,14 +102,21 @@ const History = () => {
     }
   };
 
-  const filteredReports = reports.filter((report) => {
-    const matchesSearch =
-      report.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.reportType.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter =
-      filterStatus === "all" || report.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  // If a report is selected, show the detailed view
+  if (selectedReport) {
+    return (
+      <div className="min-h-screen cosmic-bg">
+        <div className="absolute inset-0 stars-pattern opacity-30"></div>
+        <Navbar />
+        <main className="pt-24 relative z-10">
+          <AnalysisResultDisplay
+            result={selectedReport}
+            onClose={() => setSelectedReport(null)}
+          />
+        </main>
+      </div>
+    );
+  }
 
   const stats = [
     {
@@ -328,14 +310,14 @@ const History = () => {
                               <span className="flex items-center">
                                 <Calendar className="w-4 h-4 mr-1" />
                                 {new Date(
-                                  report.uploadDate
+                                  report.analysisDate
                                 ).toLocaleDateString()}
                               </span>
                               <span className="flex items-center">
                                 <Activity className="w-4 h-4 mr-1" />
-                                {report.reportType}
+                                {report.reportType || "Medical Document"}
                               </span>
-                              <span>{report.fileSize}</span>
+                              <span>{report.fileSize || "Unknown size"}</span>
                             </div>
 
                             <div className="flex items-center space-x-3 mb-4">
@@ -356,32 +338,33 @@ const History = () => {
                               )}
                             </div>
 
-                            {report.keyFindings.length > 0 && (
-                              <div className="mb-4">
-                                <h4 className="text-sm font-medium text-foreground mb-2">
-                                  Key Findings:
-                                </h4>
-                                <ul className="space-y-1">
-                                  {report.keyFindings
-                                    .slice(0, 2)
-                                    .map((finding, idx) => (
-                                      <li
-                                        key={idx}
-                                        className="text-sm text-muted-foreground flex items-start"
-                                      >
-                                        <span className="w-1.5 h-1.5 bg-accent rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                                        {finding}
+                            {report.conditions &&
+                              report.conditions.length > 0 && (
+                                <div className="mb-4">
+                                  <h4 className="text-sm font-medium text-foreground mb-2">
+                                    Key Findings:
+                                  </h4>
+                                  <ul className="space-y-1">
+                                    {report.conditions
+                                      .slice(0, 2)
+                                      .map((condition, idx) => (
+                                        <li
+                                          key={idx}
+                                          className="text-sm text-muted-foreground flex items-start"
+                                        >
+                                          <span className="w-1.5 h-1.5 bg-accent rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                                          {condition.name}
+                                        </li>
+                                      ))}
+                                    {report.conditions.length > 2 && (
+                                      <li className="text-sm text-accent">
+                                        +{report.conditions.length - 2} more
+                                        findings
                                       </li>
-                                    ))}
-                                  {report.keyFindings.length > 2 && (
-                                    <li className="text-sm text-accent">
-                                      +{report.keyFindings.length - 2} more
-                                      findings
-                                    </li>
-                                  )}
-                                </ul>
-                              </div>
-                            )}
+                                    )}
+                                  </ul>
+                                </div>
+                              )}
                           </div>
                         </div>
 
@@ -430,6 +413,7 @@ const History = () => {
                           <Button
                             size="sm"
                             className="btn-medical-primary group"
+                            onClick={() => setSelectedReport(report)}
                           >
                             View Analysis
                             <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />

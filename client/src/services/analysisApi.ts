@@ -122,7 +122,7 @@ export const analysisApi = {
       formData.append("fieldsSchema", JSON.stringify(request.fieldsSchema));
     }
 
-    const response = await fetch("/api/analyze", {
+    const response = await fetch("http://localhost:5000/api/analyze", {
       method: "POST",
       body: formData,
     });
@@ -139,7 +139,7 @@ export const analysisApi = {
 
   // Get analysis history
   async getAnalysisHistory(): Promise<HealthAnalysisResult[]> {
-    const response = await fetch("/api/analysis/history");
+    const response = await fetch("http://localhost:5000/api/analysis/history");
 
     if (!response.ok) {
       throw new Error("Failed to fetch analysis history");
@@ -150,7 +150,7 @@ export const analysisApi = {
 
   // Get specific analysis by ID
   async getAnalysis(id: string): Promise<HealthAnalysisResult> {
-    const response = await fetch(`/api/analysis/${id}`);
+    const response = await fetch(`http://localhost:5000/api/analysis/${id}`);
 
     if (!response.ok) {
       throw new Error("Failed to fetch analysis");
