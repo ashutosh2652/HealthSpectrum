@@ -25,11 +25,30 @@ import { Navbar } from "@/components/Navbar";
 import { AnalysisResultDisplay } from "@/components/AnalysisResultDisplay";
 import { type HealthAnalysisResult } from "@/services/analysisApi";
 
+// Interface for history reports
+interface HistoryReport {
+  id: string;
+  fileName: string;
+  uploadDate: string;
+  analysisDate: string;
+  status: "completed" | "processing" | "error";
+  reportType: string;
+  riskLevel: "low" | "medium" | "high";
+  keyFindings?: string[];
+  conditions?: Array<{
+    name: string;
+    confidence?: number;
+    evidence?: string[];
+  }>;
+  fileSize: string;
+}
+
 const History = () => {
   const navigate = useNavigate(); // ✅ Initialize navigate
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+  const [selectedReport, setSelectedReport] = useState<HistoryReport | null>(null);
 
   // Mock data - replace with actual API call
   const [reports] = useState<HistoryReport[]>([
