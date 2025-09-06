@@ -6,24 +6,36 @@ import analysisRoutes from "./routes/Analysis.routes.js";
 
 const app = express();
 
-// Allow both ports for development
+// CORS configuration for both development and production
 const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:8080",
     "http://localhost:3000",
     process.env.CLIENT_BASE_URL,
+    // Add your production domain here when deploying
+    process.env.FRONTEND_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
 ].filter(Boolean);
 
-app.use(helmet());
+// Security middleware
+app.use(
+    helmet({
+        crossOriginEmbedderPolicy: false, // Allow file uploads
+        contentSecurityPolicy: false, // Disable for development
+    })
+);
+
+// CORS middleware
 app.use(
     cors({
-        origin: allowedOrigins,
+        origin: process.env.NODE_ENV === "production" ? allowedOrigins : true, // Allow all origins in development
         allowedHeaders: [
             "Content-Type",
             "Pragma",
             "Cache-Control",
             "Authorization",
             "Expires",
+            "X-Requested-With",
         ],
         credentials: true,
         methods: ["GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"],
@@ -31,14 +43,58 @@ app.use(
     })
 );
 
-// Handle preflight requests
-app.options("*", cors());
-
+// Body parsing middleware
 app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Routes
+// Health check route
+app.get("/", (req, res) => {
+    res.json({
+        status: "ok",
+        message: "HealthSpectrum API Server is running",
+        timestamp: new Date().toISOString(),
+        version: "1.0.0",
+    });
+});
+
+app.get("/health", (req, res) => {
+    res.json({
+        status: "healthy",
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString(),
+    });
+});
+
+// API Routes
 app.use("/api", analysisRoutes);
+
+// 404 handler for undefined routes - must be last
+app.use(function (req, res, next) {
+    res.status(404).json({
+        error: "Route not found",
+        message: `Cannot ${req.method} ${req.originalUrl}`,
+        availableEndpoints: ["GET /", "GET /health", "POST /api/analyze"],
+    });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+    console.error("Global error handler:", err);
+
+    // Multer file upload errors
+    if (err.code === "LIMIT_FILE_SIZE") {
+        return res.status(400).json({
+            error: "File too large",
+            message: "File size exceeds 50MB limit",
+        });
+    }
+
+    // Default error response
+    res.status(err.status || 500).json({
+        error: err.message || "Internal server error",
+        ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+    });
+});
 
 export { app };
