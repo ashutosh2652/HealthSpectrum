@@ -30,36 +30,20 @@ export const Navbar = ({
     >
       <div className="medical-container">
         <div className="flex items-center justify-between h-16">
-          {useInternalNavigation ? (
+          <Link to="/">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center space-x-3 cursor-pointer group"
-              onClick={onHomeClick}
             >
               <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform duration-300">
                 <Brain className="w-6 h-6 text-primary-foreground" />
               </div>
               <span className="text-2xl font-bold text-foreground group-hover:text-primary-glow transition-colors">
-                Health-Spectrum
+                HealthSpectrum
               </span>
             </motion.div>
-          ) : (
-            <Link to="/">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex items-center space-x-3 cursor-pointer group"
-              >
-                <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform duration-300">
-                  <Brain className="w-6 h-6 text-primary-foreground" />
-                </div>
-                <span className="text-2xl font-bold text-foreground group-hover:text-primary-glow transition-colors">
-                  HealthSpectrum
-                </span>
-              </motion.div>
-            </Link>
-          )}
+          </Link>
 
           <motion.div
             initial={{ opacity: 0, x: 20 }}
