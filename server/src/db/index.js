@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import path from "path";
 dotenv.config();
 
 let isConnected = false;
@@ -11,6 +12,8 @@ async function connectdb() {
         serverSelectionTimeoutMS: 5_000,
         socketTimeoutMS: 45_000,
     };
+    console.log(process.env.MONGODB_URI,"mongodburi");
+    
     try {
         await mongoose.connect(process.env.MONGODB_URI, options);
         isConnected = true;
