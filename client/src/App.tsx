@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import AuthLayout from "./components/auth/Layout";
+import InsightsPage from "./pages/insights";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/about" element={<AboutPage />} />
           <Route path="/upload" element={<Upload />} />
           <Route path="/history" element={<History />} />
+          <Route path="/insights" element={<InsightsPage />}/>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
