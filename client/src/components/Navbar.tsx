@@ -110,6 +110,19 @@ export const Navbar = ({
               </Button>
             </Link>
 
+            <Link to="/insights">
+              <Button
+                variant="ghost"
+                className={`transition-colors font-medium ${
+                  !useInternalNavigation && isActive("/insights")
+                    ? "text-primary-glow bg-primary-soft border border-primary/20 rounded-lg px-4"
+                    : "text-muted-foreground hover:text-primary-glow"
+                }`}
+              >
+                Insights
+              </Button>
+            </Link>
+
             <Link to="/PastReport">
               <Button
                 variant="ghost"

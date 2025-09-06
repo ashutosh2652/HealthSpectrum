@@ -11,6 +11,7 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import AuthLayout from "./components/auth/Layout";
 import PastReport from "./pages/PastReport";
+import InsightsPage from "./pages/insights";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +29,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/upload" element={<Upload />} />
-          <Route path="/PastReport" element={<PastReport />} />
+          <Route path="/insights" element={<InsightsPage />} />
+          <Route path="/past-report" element={<PastReport onBack={() => {}} />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
