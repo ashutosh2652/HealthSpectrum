@@ -1,3 +1,4 @@
+import dotenv from "dotenv";
 import { app } from "./app.js";
 import { connectdb, disconnectdb } from "./db/index.js";
 import dotenv from "dotenv";
