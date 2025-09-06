@@ -24,7 +24,13 @@ const allowedOrigins = [
 
 app.use(
     cors({
-        origin: "*",
+        origin: function (origin, callback) {
+            console.log("🔍 CORS Request from origin:", origin);
+            console.log("✅ Allowed origins:", allowedOrigins);
+
+            // Always allow requests (for debugging)
+            callback(null, true);
+        },
         methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allowedHeaders: [
             "Content-Type",
@@ -36,10 +42,31 @@ app.use(
             "Accept",
             "Origin",
         ],
-        credentials: true,
+        credentials: false, // Set to false when allowing all origins
         optionsSuccessStatus: 204,
     })
 );
+
+// Additional manual CORS headers (fallback)
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    res.header("Access-Control-Allow-Origin", origin || "*");
+    res.header(
+        "Access-Control-Allow-Methods",
+        "GET,HEAD,OPTIONS,POST,PUT,DELETE,PATCH"
+    );
+    res.header(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma"
+    );
+
+    if (req.method === "OPTIONS") {
+        console.log("🔧 Handling OPTIONS preflight request from:", origin);
+        return res.status(204).end();
+    }
+
+    next();
+});
 
 // Security middleware
 app.use(
