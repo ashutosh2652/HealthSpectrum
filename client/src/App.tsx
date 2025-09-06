@@ -6,12 +6,12 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Upload from "./pages/Upload";
 import AboutPage from "./pages/AboutPage";
+import History from "./pages/History";
 import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import AuthLayout from "./components/auth/Layout";
 import PastReport from "./pages/PastReport";
-import InsightsPage from "./pages/insights";
 
 const queryClient = new QueryClient();
 
@@ -29,8 +29,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/upload" element={<Upload />} />
-          <Route path="/insights" element={<InsightsPage />} />
-          <Route path="/past-report" element={<PastReport onBack={() => {}} />} />
+          <Route path="/PastReport" element={<PastReport />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

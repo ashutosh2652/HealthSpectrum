@@ -123,16 +123,16 @@ export const Navbar = ({
               </Button>
             </Link>
 
-            <Link to="/PastReport">
+            <Link to="/history">
               <Button
                 variant="ghost"
                 className={`transition-colors font-medium ${
-                  !useInternalNavigation && isActive("/PastReport")
+                  !useInternalNavigation && isActive("/history")
                     ? "text-primary-glow bg-primary-soft border border-primary/20 rounded-lg px-4"
                     : "text-muted-foreground hover:text-primary-glow"
                 }`}
               >
-                Past Reports
+                History
               </Button>
             </Link>
 
