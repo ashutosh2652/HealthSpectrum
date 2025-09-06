@@ -12,6 +12,9 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import AuthLayout from "./components/auth/Layout";
 import InsightsPage from "./pages/insights";
+import Processing from "./pages/Processing"
+import Results from "./pages/results";
+import Process from "./pages/process";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +34,9 @@ const App = () => (
           <Route path="/upload" element={<Upload />} />
           <Route path="/history" element={<History />} />
           <Route path="/insights" element={<InsightsPage />}/>
+           <Route path="/processing" element={<Processing />}/>
+            <Route path="/results" element={<Results />}/>
+             <Route path="/process" element={<Process/>}/>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
