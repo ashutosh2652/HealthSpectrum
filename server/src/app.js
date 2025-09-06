@@ -7,7 +7,40 @@ import analysisRoutes from "./routes/Analysis.routes.js";
 const app = express();
 
 // CORS configuration for both development and production
-const allowedOrigins = [process.env.CLIENT_BASE_URL];
+const allowedOrigins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:8080",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "https://health-spectrum.vercel.app",
+    "https://healthspectrum.vercel.app",
+    "https://health-spectrum-git-main.vercel.app",
+    "https://health-spectrum-git-rishav.vercel.app",
+    process.env.CLIENT_BASE_URL,
+    process.env.FRONTEND_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+].filter(Boolean);
+
+app.use(
+    cors({
+        origin: "*",
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: [
+            "Content-Type",
+            "Authorization",
+            "Pragma",
+            "Cache-Control",
+            "Expires",
+            "X-Requested-With",
+            "Accept",
+            "Origin",
+        ],
+        credentials: true,
+        optionsSuccessStatus: 204,
+    })
+);
+
 // Security middleware
 app.use(
     helmet({
@@ -17,36 +50,36 @@ app.use(
 );
 
 // CORS middleware
-app.use(
-    cors({
-        origin: function (origin, callback) {
-            if (process.env.NODE_ENV === "production") {
-                // Allow only specific origins in production
-                if (!origin)
-                    return callback(new Error("Not allowed by CORS"), false);
-                if (allowedOrigins.includes(origin)) {
-                    callback(null, true);
-                } else {
-                    callback(new Error("Not allowed by CORS"));
-                }
-            } else {
-                // Allow all origins in development
-                callback(null, true);
-            }
-        },
-        allowedHeaders: [
-            "Content-Type",
-            "Pragma",
-            "Cache-Control",
-            "Authorization",
-            "Expires",
-            "X-Requested-With",
-        ],
-        credentials: true,
-        methods: ["GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"],
-        optionsSuccessStatus: 200,
-    })
-);
+// app.use(
+//     cors({
+//         origin: function (origin, callback) {
+//             if (process.env.NODE_ENV === "production") {
+//                 // Allow only specific origins in production
+//                 if (!origin)
+//                     return callback(new Error("Not allowed by CORS"), false);
+//                 if (allowedOrigins.includes(origin)) {
+//                     callback(null, true);
+//                 } else {
+//                     callback(new Error("Not allowed by CORS"));
+//                 }
+//             } else {
+//                 // Allow all origins in development
+//                 callback(null, true);
+//             }
+//         },
+//         allowedHeaders: [
+//             "Content-Type",
+//             "Pragma",
+//             "Cache-Control",
+//             "Authorization",
+//             "Expires",
+//             "X-Requested-With",
+//         ],
+//         credentials: true,
+//         methods: ["GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"],
+//         optionsSuccessStatus: 200,
+//     })
+// );
 
 // Body parsing middleware
 app.use(cookieParser());

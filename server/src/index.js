@@ -1,5 +1,20 @@
+import dotenv from "dotenv";
 import { app } from "./app.js";
 import { connectdb, disconnectdb } from "./db/index.js";
+
+// Load environment variables
+dotenv.config();
+
+// Debug environment variables
+console.log("🔧 Environment variables loaded:");
+console.log("- PORT:", process.env.PORT);
+console.log("- NODE_ENV:", process.env.NODE_ENV);
+console.log("- CLIENT_BASE_URL:", process.env.CLIENT_BASE_URL);
+console.log("- FRONTEND_URL:", process.env.FRONTEND_URL);
+console.log(
+    "- LANDING_AI_API_KEY:",
+    process.env.LANDING_AI_API_KEY ? "✅ Loaded" : "❌ Missing"
+);
 
 let server;
 
