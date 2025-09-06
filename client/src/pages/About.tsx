@@ -32,7 +32,7 @@ export const About = ({ onBack }: AboutProps) => {
             </Button>
 
             <h1 className="text-5xl font-bold text-medical-title mb-6">
-              About MedAnalyze
+              About Health-Spectrum
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               Revolutionizing healthcare through AI-powered medical document
