@@ -17,17 +17,17 @@ import { ProcessingSection } from "@/components/sections/ProcessingSection";
 import { ResultsSection } from "@/components/sections/ResultsSection";
 import { FeaturesSection } from "@/components/sections/FeaturesSection";
 import { About } from "./About";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<
     "home" | "about" | "upload" | "processing" | "results"
   >("home");
+  const navigate = useNavigate();
 
   const handleGetStarted = () => {
-    // For backend functionality like authentication and file uploads,
-    // you'll need to connect to Supabase first
-    setCurrentView("upload");
+    // Navigate to the dedicated upload page
+    navigate("/upload");
   };
 
   return (
@@ -70,6 +70,14 @@ const Index = () => {
               >
                 About
               </Button>
+              <Link to="/upload">
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-primary-glow transition-colors font-medium flex items-center space-x-2"
+                >
+                  <span>Upload</span>
+                </Button>
+              </Link>
               <Link to="/auth/sign-in">
                 <Button className="btn-medical-primary group">
                   <Shield className="w-4 h-4 mr-2" />
