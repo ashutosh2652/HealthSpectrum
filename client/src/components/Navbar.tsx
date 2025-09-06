@@ -84,7 +84,7 @@ export const Navbar = ({ className = "" }: NavbarProps) => {
             <Link to="/auth/sign-in">
               <Button className="btn-medical-primary group">
                 <Shield className="w-4 h-4 mr-2" />
-                Sign In
+                Log In/Sign Up
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
