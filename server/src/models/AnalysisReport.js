@@ -8,6 +8,11 @@ const analysisReportSchema = new Schema(
       ref: 'Patient',
       required: true,
     },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     sourceDocuments: [{
       type: Schema.Types.ObjectId,
       ref: 'SourceDocument',
