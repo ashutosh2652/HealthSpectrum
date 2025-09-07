@@ -3,15 +3,14 @@ const { Schema, model } = mongoose;
 
 const userSchema = new Schema(
   {
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-    },
-    passwordHash: {
-      type: String,
-    },
+    clerkId: { type: String, required: true, unique: true },
+  email: { type: String },
+  firstName: String,
+  lastName: String,
+  username: String,
+  imageUrl: String,
+  createdAt: Date,
+  lastLoginAt: Date,
     linkedPatients: [{
       type: Schema.Types.ObjectId,
       ref: 'Patient',
