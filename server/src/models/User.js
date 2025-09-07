@@ -11,10 +11,17 @@ const userSchema = new Schema(
   imageUrl: String,
   createdAt: Date,
   lastLoginAt: Date,
-    linkedPatients: [{
-      type: Schema.Types.ObjectId,
-      ref: 'Patient',
-    }],
+    linkedPatients: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Patient",
+      },
+    ],
+
+    token: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );
