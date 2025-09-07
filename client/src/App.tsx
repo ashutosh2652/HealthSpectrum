@@ -17,34 +17,37 @@ import Processing from "./pages/Processing";
 import Results from "./pages/results";
 import Process from "./pages/process";
 import { SignIn, SignUp } from "@clerk/clerk-react";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          {/* <Route path="/auth" element={<AuthLayout />}>
-            <Route path="sign-in" element={<SignIn />} />
-            <Route path="sign-up" element={<SignUp />} />
-          </Route> */}
-          <Route path="/sign-in" element={<SignIn />} />
-          <Route path="/sign-up" element={<SignUp />} />
-          <Route path="/" element={<Index />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/upload" element={<Upload />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/insights" element={<InsightsPage />} />
-          <Route path="/processing" element={<Processing />} />
-          <Route path="/results" element={<Results />} />
-          <Route path="/process" element={<Process />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* <Route path="/auth" element={<AuthLayout />}>
+              <Route path="sign-in" element={<SignIn />} />
+              <Route path="sign-up" element={<SignUp />} />
+            </Route> */}
+            <Route path="/sign-in" element={<SignIn />} />
+            <Route path="/sign-up" element={<SignUp />} />
+            <Route path="/" element={<Index />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/upload" element={<Upload />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/insights" element={<InsightsPage />} />
+            <Route path="/processing" element={<Processing />} />
+            <Route path="/results" element={<Results />} />
+            <Route path="/process" element={<Process />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
