@@ -40,7 +40,7 @@ app.use((req, res, next) => {
     );
     res.header(
         "Access-Control-Allow-Headers",
-        "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma"
+        "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma, Clerk-Signature, clerk-signature"
     );
 
     if (req.method === "OPTIONS") return res.status(204).end();
@@ -55,13 +55,27 @@ app.use(
     })
 );
 
-// Body parsing middleware
+// IMPORTANT: Mount webhook raw parser BEFORE express.json() so Clerk signature verification receives the raw Buffer.
+// Clerk webhook URL in your Clerk dashboard is: /webhooks/clerk
+app.post(
+    "/webhooks/clerk",
+    bodyParser.raw({ type: "application/json" }),
+    (req, res) => {
+        // req.body here is a Buffer (raw body) required by Clerk verifyWebhook
+        req.rawBody = req.body;
+        // minimal logging for debugging webhook calls
+        console.log(
+            "🔔 /webhooks/clerk invoked, rawBody length:",
+            req.rawBody?.length || 0
+        );
+        ClerkWebhookHandler(req, res);
+    }
+);
+
+// Body parsing middleware (after webhook raw handler)
 app.use(cookieParser());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
-
-// Webhook raw body middleware
-app.use("/api/webhooks/clerk", bodyParser.raw({ type: "application/json" }));
 
 // Health check
 app.get("/", (req, res) => {
@@ -84,12 +98,7 @@ app.get("/health", (req, res) => {
 // API routes
 app.use("/api", analysisRoutes);
 
-// Clerk webhook endpoint
-app.post("/api/webhooks/clerk", (req, res) => {
-    // Attach rawBody as Buffer for signature verification
-    req.rawBody = req.body; // Buffer from bodyParser.raw
-    ClerkWebhookHandler(req, res);
-});
+// Clerk webhook endpoint note: kept above as /webhooks/clerk (matches Clerk dashboard)
 
 // Session setup
 app.use(
