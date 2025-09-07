@@ -29,6 +29,7 @@ const app = express();
 const allowedOrigins = [
     "https://health-spectrum.vercel.app",
     "https://healthspectrum.onrender.com",
+    "http://localhost:8080",
 ];
 
 // CORS middleware

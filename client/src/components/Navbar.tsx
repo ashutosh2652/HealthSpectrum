@@ -12,6 +12,8 @@ import {
 } from "@clerk/clerk-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { registerUserThunk, loginUserThunk } from "@/store/thunk/authThunk";
 
 // import UserProfile from "./components/UserProfile";
 
@@ -31,14 +33,31 @@ export const Navbar = ({
   const location = useLocation();
   const { user } = useUser();
   const { theme, toggleTheme } = useTheme();
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    if (user !== null && user !== undefined) {
-      const email = user?.emailAddresses[0].emailAddress;
-      const clerkId = user?.id;
-      const fullName = user?.firstName;
-    }
-  }, [user]);
+    if (!user) return;
+
+    // Guard all fields coming from Clerk to avoid runtime errors
+    const email =
+      user.emailAddresses && user.emailAddresses.length > 0
+        ? user.emailAddresses[0].emailAddress
+        : undefined;
+    const clerkId = user.id;
+    const userName =
+      user.firstName ||
+      user.username ||
+      (email ? email.split("@")[0] : undefined);
+
+    // Only proceed when we have at least an email or clerkId
+    dispatch(registerUserThunk({ email, userName, clerkId })).then(
+      (data: any) => {
+        if (data.payload.success) {
+          loginUserThunk({ email, clerkId });
+        }
+      }
+    );
+  }, [user, dispatch]);
 
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
