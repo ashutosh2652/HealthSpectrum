@@ -11,9 +11,13 @@
         "dev": "nodemon ./src/index.js"
     },
     "dependencies": {
+<<<<<<< HEAD
+        "@google/generative-ai": "^0.24.1",
+=======
         "@clerk/backend": "^2.12.1",
         "@clerk/clerk-sdk-node": "^5.1.6",
         "@clerk/express": "^1.7.29",
+>>>>>>> ba9373dbc05149c77c4dfb2106bb2a51b7ad63ab
         "bcrypt": "^6.0.0",
         "bcryptjs": "^3.0.2",
         "cloudinary": "^2.7.0",

@@ -13,6 +13,7 @@ import sourceDocumentRoutes from "./routes/sourceDocument.routes.js";
 
 import dotenv from "dotenv";
 dotenv.config();
+import geminiRoutes from "./routes/gemini.routes.js";
 import session from "express-session";
 // import dotenv from "dotenv";
 import bodyParser from "body-parser";
@@ -92,6 +93,8 @@ app.get("/health", (req, res) => {
     });
 });
 
+// API Routes
+app.use("/api", geminiRoutes);
 // API routes
 app.use("/api", analysisRoutes);
 
@@ -164,7 +167,12 @@ app.use((req, res) => {
     res.status(404).json({
         error: "Route not found",
         message: `Cannot ${req.method} ${req.originalUrl}`,
-        availableEndpoints: ["GET /", "GET /health", "POST /api/analyze"],
+        availableEndpoints: [
+            "GET /",
+            "GET /health",
+            "POST /api/analyze",
+            "GET /api/test",
+        ],
     });
 });
 
