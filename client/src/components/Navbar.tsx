@@ -150,7 +150,7 @@ export const Navbar = ({
             <SignedOut>
               {/* <p>You are signed out.</p> */}
               <SignInButton mode="modal" />
-              {/* <SignUpButton mode="modal" /> */}
+              <SignUpButton mode="modal" />
             </SignedOut>
 
             <SignedIn>
