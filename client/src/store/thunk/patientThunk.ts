@@ -19,7 +19,8 @@ export interface Patient {
 }
 
 // ---------------- API URL ----------------
-const API_URL = "/api/v1/patients";
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/patients`;
 
 // 🔹 Create Patient
 export const createPatientThunk = createAsyncThunk<
@@ -33,7 +34,9 @@ export const createPatientThunk = createAsyncThunk<
     });
     return data.data;
   } catch (err) {
-    const error: AxiosError<{ message: string }> = err as AxiosError<{ message: string }>;
+    const error: AxiosError<{ message: string }> = err as AxiosError<{
+      message: string;
+    }>;
     return rejectWithValue(error.response?.data?.message || error.message);
   }
 });
@@ -50,7 +53,9 @@ export const listPatientsThunk = createAsyncThunk<
     });
     return data.data;
   } catch (err) {
-    const error: AxiosError<{ message: string }> = err as AxiosError<{ message: string }>;
+    const error: AxiosError<{ message: string }> = err as AxiosError<{
+      message: string;
+    }>;
     return rejectWithValue(error.response?.data?.message || error.message);
   }
 });
@@ -67,7 +72,9 @@ export const getPatientByIdThunk = createAsyncThunk<
     });
     return data.data;
   } catch (err) {
-    const error: AxiosError<{ message: string }> = err as AxiosError<{ message: string }>;
+    const error: AxiosError<{ message: string }> = err as AxiosError<{
+      message: string;
+    }>;
     return rejectWithValue(error.response?.data?.message || error.message);
   }
 });
@@ -79,12 +86,18 @@ export const updatePatientThunk = createAsyncThunk<
   { rejectValue: string }
 >("patients/updatePatient", async ({ id, updates }, { rejectWithValue }) => {
   try {
-    const { data } = await axios.put<{ data: Patient }>(`${API_URL}/${id}`, updates, {
-      withCredentials: true,
-    });
+    const { data } = await axios.put<{ data: Patient }>(
+      `${API_URL}/${id}`,
+      updates,
+      {
+        withCredentials: true,
+      }
+    );
     return data.data;
   } catch (err) {
-    const error: AxiosError<{ message: string }> = err as AxiosError<{ message: string }>;
+    const error: AxiosError<{ message: string }> = err as AxiosError<{
+      message: string;
+    }>;
     return rejectWithValue(error.response?.data?.message || error.message);
   }
 });
@@ -101,7 +114,9 @@ export const deletePatientThunk = createAsyncThunk<
     });
     return id;
   } catch (err) {
-    const error: AxiosError<{ message: string }> = err as AxiosError<{ message: string }>;
+    const error: AxiosError<{ message: string }> = err as AxiosError<{
+      message: string;
+    }>;
     return rejectWithValue(error.response?.data?.message || error.message);
   }
 });

@@ -22,7 +22,7 @@ interface ApiResponse<T> {
 }
 
 // ---------------- Thunks ----------------
-
+const BASE_URL = import.meta.env.VITE_API_URL;
 // REGISTER
 export const registerUserThunk = createAsyncThunk<
   User, // return type
@@ -31,7 +31,7 @@ export const registerUserThunk = createAsyncThunk<
 >("auth/registerUser", async (payload, { rejectWithValue }) => {
   try {
     const { data } = await axios.post<ApiResponse<User>>(
-      "/api/v1/auth/register",
+      `${BASE_URL}/api/auth/register`,
       payload
     );
     return data.data;
@@ -39,7 +39,9 @@ export const registerUserThunk = createAsyncThunk<
     const error: AxiosError<{ message: string }> = err as AxiosError<{
       message: string;
     }>;
-    return rejectWithValue(error.response?.data?.message || "Registration failed");
+    return rejectWithValue(
+      error.response?.data?.message || "Registration failed"
+    );
   }
 });
 
@@ -51,7 +53,7 @@ export const loginUserThunk = createAsyncThunk<
 >("auth/loginUser", async (payload, { rejectWithValue }) => {
   try {
     const { data } = await axios.post<ApiResponse<AuthResponse>>(
-      "/api/v1/auth/login",
+      `${BASE_URL}/api/auth/login`,
       payload,
       { withCredentials: true }
     );
@@ -72,7 +74,7 @@ export const logoutUserThunk = createAsyncThunk<
 >("auth/logoutUser", async (_, { rejectWithValue }) => {
   try {
     const { data } = await axios.post<{ message: string }>(
-      "/api/v1/auth/logout",
+      `${BASE_URL}/api/auth/logout`,
       {},
       { withCredentials: true }
     );
@@ -92,15 +94,20 @@ export const getUserProfileThunk = createAsyncThunk<
   { rejectValue: string }
 >("auth/getUserProfile", async (_, { rejectWithValue }) => {
   try {
-    const { data } = await axios.get<ApiResponse<User>>("/api/v1/auth/me", {
-      withCredentials: true,
-    });
+    const { data } = await axios.get<ApiResponse<User>>(
+      `${BASE_URL}/api/auth/me`,
+      {
+        withCredentials: true,
+      }
+    );
     return data.data;
   } catch (err) {
     const error: AxiosError<{ message: string }> = err as AxiosError<{
       message: string;
     }>;
-    return rejectWithValue(error.response?.data?.message || "Fetching profile failed");
+    return rejectWithValue(
+      error.response?.data?.message || "Fetching profile failed"
+    );
   }
 });
 
@@ -112,7 +119,7 @@ export const linkPatientToUserThunk = createAsyncThunk<
 >("auth/linkPatientToUser", async ({ patientId }, { rejectWithValue }) => {
   try {
     const { data } = await axios.post<ApiResponse<User>>(
-      "/api/v1/auth/link-patient",
+      `${BASE_URL}/api/auth/link-patient`,
       { patientId },
       { withCredentials: true }
     );
@@ -121,6 +128,8 @@ export const linkPatientToUserThunk = createAsyncThunk<
     const error: AxiosError<{ message: string }> = err as AxiosError<{
       message: string;
     }>;
-    return rejectWithValue(error.response?.data?.message || "Linking patient failed");
+    return rejectWithValue(
+      error.response?.data?.message || "Linking patient failed"
+    );
   }
 });

@@ -30,7 +30,8 @@ interface ApiResponse<T> {
 }
 
 // ---------------- API URL ----------------
-const API_URL = "/api/v1/analysisReports";
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/analysisReports`;
 
 // 🔹 Create Report
 export const createReportThunk = createAsyncThunk<
@@ -78,20 +79,23 @@ export const listReportsByPatientThunk = createAsyncThunk<
   AnalysisReport[],
   string,
   { rejectValue: string }
->("analysisReports/listReportsByPatient", async (patientId, { rejectWithValue }) => {
-  try {
-    const { data } = await axios.get<ApiResponse<AnalysisReport[]>>(
-      `${API_URL}/patient/${patientId}`,
-      { withCredentials: true }
-    );
-    return data.data;
-  } catch (err) {
-    const error: AxiosError<{ message: string }> = err as AxiosError<{
-      message: string;
-    }>;
-    return rejectWithValue(error.response?.data?.message || error.message);
+>(
+  "analysisReports/listReportsByPatient",
+  async (patientId, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get<ApiResponse<AnalysisReport[]>>(
+        `${API_URL}/patient/${patientId}`,
+        { withCredentials: true }
+      );
+      return data.data;
+    } catch (err) {
+      const error: AxiosError<{ message: string }> = err as AxiosError<{
+        message: string;
+      }>;
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
   }
-});
+);
 
 // 🔹 Update Report Feedback
 export const updateReportFeedbackThunk = createAsyncThunk<

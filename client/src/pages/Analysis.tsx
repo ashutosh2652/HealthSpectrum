@@ -34,6 +34,7 @@ import {
   Recommendation,
 } from "@/pages/types/AnalysisReport";
 import { demoAnalysisReport } from "@/pages/data/demodata";
+import api from "@/lib/apiClient"; // adjust path if using aliases
 
 interface AnalysisReportPageProps {
   reportId?: string;
@@ -49,22 +50,21 @@ const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
   const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
-    // Simulate API call with demo data
     const fetchReport = async () => {
       try {
         setLoading(true);
-        // Simulate network delay
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        setReport(demoAnalysisReport);
+        // Example API call using centralized client
+        const resp = await api.get(`/api/reports/${reportId}`); // uses VITE_API_BASE_URL + /api/reports/...
+        setReport(resp.data);
       } catch (err) {
+        console.error("Failed to fetch report", err);
         setError("Failed to fetch analysis report");
-        setLoading(false);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchReport();
+    if (reportId) fetchReport();
   }, [reportId]);
 
   const getUrgencyColor = (urgency: string) => {

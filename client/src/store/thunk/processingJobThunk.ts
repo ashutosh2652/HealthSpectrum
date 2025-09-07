@@ -26,8 +26,9 @@ interface UpdateJobStatusPayload {
   analysisReportId?: string;
 }
 
+const BASE_URL = import.meta.env.VITE_API_URL;
 // ---------------- API URL ----------------
-const API_URL = "/api/v1/processing-jobs";
+const API_URL = `${BASE_URL}/api/processing-jobs`;
 
 // 🔹 Create a new processing job
 export const createJobThunk = createAsyncThunk<
@@ -36,12 +37,18 @@ export const createJobThunk = createAsyncThunk<
   { rejectValue: string }
 >("processingJobs/create", async (payload, { rejectWithValue }) => {
   try {
-    const { data } = await axios.post<{ data: ProcessingJob }>(API_URL, payload, {
-      withCredentials: true,
-    });
+    const { data } = await axios.post<{ data: ProcessingJob }>(
+      API_URL,
+      payload,
+      {
+        withCredentials: true,
+      }
+    );
     return data.data;
   } catch (err) {
-    const error: AxiosError<{ message: string }> = err as AxiosError<{ message: string }>;
+    const error: AxiosError<{ message: string }> = err as AxiosError<{
+      message: string;
+    }>;
     return rejectWithValue(error.response?.data?.message || error.message);
   }
 });
@@ -51,21 +58,30 @@ export const updateJobStatusThunk = createAsyncThunk<
   ProcessingJob,
   UpdateJobStatusPayload,
   { rejectValue: string }
->("processingJobs/updateStatus", async ({ id, status, errorLog, analysisReportId }, { rejectWithValue }) => {
-  try {
-    const { data } = await axios.put<{ data: ProcessingJob }>(`${API_URL}/${id}/status`, {
-      status,
-      errorLog,
-      analysisReportId,
-    }, {
-      withCredentials: true,
-    });
-    return data.data;
-  } catch (err) {
-    const error: AxiosError<{ message: string }> = err as AxiosError<{ message: string }>;
-    return rejectWithValue(error.response?.data?.message || error.message);
+>(
+  "processingJobs/updateStatus",
+  async ({ id, status, errorLog, analysisReportId }, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.put<{ data: ProcessingJob }>(
+        `${API_URL}/${id}/status`,
+        {
+          status,
+          errorLog,
+          analysisReportId,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+      return data.data;
+    } catch (err) {
+      const error: AxiosError<{ message: string }> = err as AxiosError<{
+        message: string;
+      }>;
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
   }
-});
+);
 
 // 🔹 Get job by ID
 export const getJobByIdThunk = createAsyncThunk<
@@ -74,12 +90,17 @@ export const getJobByIdThunk = createAsyncThunk<
   { rejectValue: string }
 >("processingJobs/getById", async (id, { rejectWithValue }) => {
   try {
-    const { data } = await axios.get<{ data: ProcessingJob }>(`${API_URL}/${id}`, {
-      withCredentials: true,
-    });
+    const { data } = await axios.get<{ data: ProcessingJob }>(
+      `${API_URL}/${id}`,
+      {
+        withCredentials: true,
+      }
+    );
     return data.data;
   } catch (err) {
-    const error: AxiosError<{ message: string }> = err as AxiosError<{ message: string }>;
+    const error: AxiosError<{ message: string }> = err as AxiosError<{
+      message: string;
+    }>;
     return rejectWithValue(error.response?.data?.message || error.message);
   }
 });
@@ -91,12 +112,17 @@ export const listJobsByPatientThunk = createAsyncThunk<
   { rejectValue: string }
 >("processingJobs/listByPatient", async (patientId, { rejectWithValue }) => {
   try {
-    const { data } = await axios.get<{ data: ProcessingJob[] }>(`${API_URL}/patient/${patientId}`, {
-      withCredentials: true,
-    });
+    const { data } = await axios.get<{ data: ProcessingJob[] }>(
+      `${API_URL}/patient/${patientId}`,
+      {
+        withCredentials: true,
+      }
+    );
     return data.data;
   } catch (err) {
-    const error: AxiosError<{ message: string }> = err as AxiosError<{ message: string }>;
+    const error: AxiosError<{ message: string }> = err as AxiosError<{
+      message: string;
+    }>;
     return rejectWithValue(error.response?.data?.message || error.message);
   }
 });

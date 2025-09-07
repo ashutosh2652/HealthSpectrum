@@ -18,33 +18,42 @@ interface UploadDocumentPayload {
   rawText?: string;
   file: File;
 }
-
+const BASE_URL = import.meta.env.VITE_API_URL;
 // ---------------- API URL ----------------
-const API_URL = "/api/v1/source-documents";
+const API_URL = `${BASE_URL}/api/source-documents`;
 
 // 🔹 Upload a new document
 export const uploadDocumentThunk = createAsyncThunk<
   SourceDocument,
   UploadDocumentPayload,
   { rejectValue: string }
->("sourceDocuments/upload", async ({ patientId, rawText, file }, { rejectWithValue }) => {
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("patientId", patientId);
-    if (rawText) formData.append("rawText", rawText);
+>(
+  "sourceDocuments/upload",
+  async ({ patientId, rawText, file }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("patientId", patientId);
+      if (rawText) formData.append("rawText", rawText);
 
-    const { data } = await axios.post<{ data: SourceDocument }>(API_URL, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-      withCredentials: true,
-    });
+      const { data } = await axios.post<{ data: SourceDocument }>(
+        API_URL,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        }
+      );
 
-    return data.data;
-  } catch (err) {
-    const error: AxiosError<{ message: string }> = err as AxiosError<{ message: string }>;
-    return rejectWithValue(error.response?.data?.message || error.message);
+      return data.data;
+    } catch (err) {
+      const error: AxiosError<{ message: string }> = err as AxiosError<{
+        message: string;
+      }>;
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
   }
-});
+);
 
 // 🔹 Get a document by ID
 export const getDocumentByIdThunk = createAsyncThunk<
@@ -53,12 +62,17 @@ export const getDocumentByIdThunk = createAsyncThunk<
   { rejectValue: string }
 >("sourceDocuments/getById", async (id, { rejectWithValue }) => {
   try {
-    const { data } = await axios.get<{ data: SourceDocument }>(`${API_URL}/${id}`, {
-      withCredentials: true,
-    });
+    const { data } = await axios.get<{ data: SourceDocument }>(
+      `${API_URL}/${id}`,
+      {
+        withCredentials: true,
+      }
+    );
     return data.data;
   } catch (err) {
-    const error: AxiosError<{ message: string }> = err as AxiosError<{ message: string }>;
+    const error: AxiosError<{ message: string }> = err as AxiosError<{
+      message: string;
+    }>;
     return rejectWithValue(error.response?.data?.message || error.message);
   }
 });
@@ -70,12 +84,17 @@ export const listDocumentsByPatientThunk = createAsyncThunk<
   { rejectValue: string }
 >("sourceDocuments/listByPatient", async (patientId, { rejectWithValue }) => {
   try {
-    const { data } = await axios.get<{ data: SourceDocument[] }>(`${API_URL}/patient/${patientId}`, {
-      withCredentials: true,
-    });
+    const { data } = await axios.get<{ data: SourceDocument[] }>(
+      `${API_URL}/patient/${patientId}`,
+      {
+        withCredentials: true,
+      }
+    );
     return data.data;
   } catch (err) {
-    const error: AxiosError<{ message: string }> = err as AxiosError<{ message: string }>;
+    const error: AxiosError<{ message: string }> = err as AxiosError<{
+      message: string;
+    }>;
     return rejectWithValue(error.response?.data?.message || error.message);
   }
 });
@@ -92,7 +111,9 @@ export const deleteDocumentThunk = createAsyncThunk<
     });
     return id;
   } catch (err) {
-    const error: AxiosError<{ message: string }> = err as AxiosError<{ message: string }>;
+    const error: AxiosError<{ message: string }> = err as AxiosError<{
+      message: string;
+    }>;
     return rejectWithValue(error.response?.data?.message || error.message);
   }
 });
