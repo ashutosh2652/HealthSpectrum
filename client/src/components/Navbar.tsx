@@ -2,6 +2,16 @@ import { motion } from "framer-motion";
 import { Shield, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+  useUser,
+} from "@clerk/clerk-react";
+
+// import UserProfile from "./components/UserProfile";
 
 interface NavbarProps {
   className?: string;
@@ -17,6 +27,10 @@ export const Navbar = ({
   useInternalNavigation = false,
 }: NavbarProps) => {
   const location = useLocation();
+  const { user } = useUser();
+  const email = user?.emailAddresses[0].emailAddress;
+  const clerkId = user?.id;
+  const fullName = user?.firstName;
 
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
@@ -127,14 +141,29 @@ export const Navbar = ({
                 History
               </Button>
             </Link>
+            <SignedOut>
+              {/* <p>You are signed out.</p> */}
+              <SignInButton mode="modal" />
+              <SignUpButton mode="modal" />
+            </SignedOut>
 
-            <Link to="/auth/sign-in">
+            <SignedIn>
+              <div
+                style={{ display: "flex", gap: "1rem", alignItems: "center" }}
+              >
+                <UserButton />
+                {/* <button onClick={logoutFromBackend}>Logout</button> */}
+              </div>
+
+              {/* <UserProfile /> */}
+            </SignedIn>
+            {/* <Link to="/auth/sign-in">
               <Button className="btn-medical-primary group">
                 <Shield className="w-4 h-4 mr-2" />
                 Login/Signup
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
-            </Link>
+            </Link> */}
           </motion.div>
         </div>
       </div>

@@ -3,51 +3,35 @@ import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import geminiRoutes from "./routes/gemini.routes.js";
+import session from "express-session";
+import dotenv from "dotenv";
+import bodyParser from "body-parser";
+
+import analysisRoutes from "./routes/Analysis.routes.js";
+import { User } from "./models/User.js";
+import { ClerkWebhookHandler } from "./controllers/Clerk.controllers.js";
+import { requireAuth } from "@clerk/express"; // Protect routes
+// import { clerkClient } from "@clerk/backend"; // Server SDK
+
+dotenv.config();
 
 const app = express();
 
-// CORS configuration for both development and production
+// Allowed origins
 const allowedOrigins = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://localhost:8080",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
     "https://health-spectrum.vercel.app",
-    "https://healthspectrum.vercel.app",
-    "https://health-spectrum-git-main.vercel.app",
-    "https://health-spectrum-git-rishav.vercel.app",
-    process.env.CLIENT_BASE_URL,
-    process.env.FRONTEND_URL,
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
-].filter(Boolean);
+    "https://healthspectrum.onrender.com",
+];
 
+// CORS middleware
 app.use(
     cors({
-        origin: function (origin, callback) {
-            console.log("🔍 CORS Request from origin:", origin);
-            console.log("✅ Allowed origins:", allowedOrigins);
-
-            // Always allow requests (for debugging)
-            callback(null, true);
-        },
-        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allowedHeaders: [
-            "Content-Type",
-            "Authorization",
-            "Pragma",
-            "Cache-Control",
-            "Expires",
-            "X-Requested-With",
-            "Accept",
-            "Origin",
-        ],
-        credentials: false, // Set to false when allowing all origins
-        optionsSuccessStatus: 204,
+        origin: allowedOrigins,
+        credentials: true,
     })
 );
 
-// Additional manual CORS headers (fallback)
+// Manual CORS headers fallback
 app.use((req, res, next) => {
     const origin = req.headers.origin;
     res.header("Access-Control-Allow-Origin", origin || "*");
@@ -57,63 +41,44 @@ app.use((req, res, next) => {
     );
     res.header(
         "Access-Control-Allow-Headers",
-        "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma"
+        "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma, Clerk-Signature, clerk-signature"
     );
 
-    if (req.method === "OPTIONS") {
-        console.log("🔧 Handling OPTIONS preflight request from:", origin);
-        return res.status(204).end();
-    }
-
+    if (req.method === "OPTIONS") return res.status(204).end();
     next();
 });
 
 // Security middleware
 app.use(
     helmet({
-        crossOriginEmbedderPolicy: false, // Allow file uploads
-        contentSecurityPolicy: false, // Disable for development
+        crossOriginEmbedderPolicy: false,
+        contentSecurityPolicy: false,
     })
 );
 
-// CORS middleware
-// app.use(
-//     cors({
-//         origin: function (origin, callback) {
-//             if (process.env.NODE_ENV === "production") {
-//                 // Allow only specific origins in production
-//                 if (!origin)
-//                     return callback(new Error("Not allowed by CORS"), false);
-//                 if (allowedOrigins.includes(origin)) {
-//                     callback(null, true);
-//                 } else {
-//                     callback(new Error("Not allowed by CORS"));
-//                 }
-//             } else {
-//                 // Allow all origins in development
-//                 callback(null, true);
-//             }
-//         },
-//         allowedHeaders: [
-//             "Content-Type",
-//             "Pragma",
-//             "Cache-Control",
-//             "Authorization",
-//             "Expires",
-//             "X-Requested-With",
-//         ],
-//         credentials: true,
-//         methods: ["GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"],
-//         optionsSuccessStatus: 200,
-//     })
-// );
+// IMPORTANT: Mount webhook raw parser BEFORE express.json() so Clerk signature verification receives the raw Buffer.
+// Clerk webhook URL in your Clerk dashboard is: /webhooks/clerk
+app.post(
+    "/webhooks/clerk",
+    bodyParser.raw({ type: "application/json" }),
+    (req, res) => {
+        // req.body here is a Buffer (raw body) required by Clerk verifyWebhook
+        req.rawBody = req.body;
+        // minimal logging for debugging webhook calls
+        console.log(
+            "🔔 /webhooks/clerk invoked, rawBody length:",
+            req.rawBody?.length || 0
+        );
+        ClerkWebhookHandler(req, res);
+    }
+);
 
-// Body parsing middleware
+// Body parsing middleware (after webhook raw handler)
 app.use(cookieParser());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Health check route
+// Health check
 app.get("/", (req, res) => {
     res.json({
         status: "ok",
@@ -133,9 +98,75 @@ app.get("/health", (req, res) => {
 
 // API Routes
 app.use("/api", geminiRoutes);
+// API routes
+app.use("/api", analysisRoutes);
 
-// 404 handler for undefined routes - must be last
-app.use(function (req, res, next) {
+// Clerk webhook endpoint note: kept above as /webhooks/clerk (matches Clerk dashboard)
+
+// Session setup
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET || "change_me",
+        resave: false,
+        saveUninitialized: false,
+    })
+);
+
+// Sign-in endpoint (demo)
+app.post("/auth/login", async (req, res) => {
+    const { userId } = req.body; // Clerk userId from frontend
+    req.session.clerkId = userId;
+    res.sendStatus(200);
+});
+
+// Logout endpoint
+// app.post("/auth/logout", (req, res) => {
+//     req.session.destroy((err) => {
+//         res.sendStatus(err ? 500 : 200);
+//     });
+// });
+app.post("/auth/logout", requireAuth(), async (req, res) => {
+    try {
+        // Destroy Express session
+        req.session.destroy((err) => {
+            if (err) console.error("Session destroy error:", err);
+        });
+
+        // Revoke Clerk session
+        const sessionId = req.auth.sessionId; // from Clerk
+        if (sessionId) {
+            await clerkClient.sessions.revokeSession(sessionId);
+        }
+
+        res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+        console.error("Logout error:", error);
+        res.status(500).json({ error: "Logout failed" });
+    }
+});
+
+// Protected route for fetching user data
+app.get("/api/user", requireAuth(), async (req, res) => {
+    const userId = req.auth.userId;
+    if (!userId) return res.status(401).json({ error: "Not authenticated" });
+
+    const user = await User.findOne({ clerkId: userId });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    res.json({
+        clerkId: user.clerkId,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        username: user.username,
+        imageUrl: user.imageUrl,
+        createdAt: user.createdAt,
+        lastLoginAt: user.lastLoginAt,
+    });
+});
+
+// 404 handler
+app.use((req, res) => {
     res.status(404).json({
         error: "Route not found",
         message: `Cannot ${req.method} ${req.originalUrl}`,
@@ -151,16 +182,12 @@ app.use(function (req, res, next) {
 // Global error handler
 app.use((err, req, res, next) => {
     console.error("Global error handler:", err);
-
-    // Multer file upload errors
     if (err.code === "LIMIT_FILE_SIZE") {
         return res.status(400).json({
             error: "File too large",
             message: "File size exceeds 50MB limit",
         });
     }
-
-    // Default error response
     res.status(err.status || 500).json({
         error: err.message || "Internal server error",
         ...(process.env.NODE_ENV === "development" && { stack: err.stack }),

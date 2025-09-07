@@ -279,7 +279,7 @@ const DialogBox = ({
                   <Button
                     variant="outline"
                     onClick={handleSaveChanges}
-                    className="px-6 py-3 text-base border-gray-300 transition-all duration-300 text-black bg-blue-500 hover:bg-blue-600 text-white"
+                    className="px-6 py-3 text-base border-gray-300 transition-all duration-300 text-black bg-blue-500 hover:bg-blue-600"
                   >
                     <Save className="w-4 h-4 mr-2" />
                     Save Changes
