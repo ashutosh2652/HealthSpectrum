@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import cookieParser from "cookie-parser"
+import cookieParser from "cookie-parser";
 
 // Import routes
 import patientRoutes from "./routes/patient.routes.js";
@@ -19,7 +19,7 @@ import bodyParser from "body-parser";
 
 import analysisRoutes from "./routes/Analysis.routes.js";
 import { User } from "./models/User.js";
-import { ClerkWebhookHandler } from "./controllers/Clerk.controllers.js";
+// import { ClerkWebhookHandler } from "./controllers/Clerk.controllers.js";
 import { requireAuth } from "@clerk/express"; // Protect routes
 // import { clerkClient } from "@clerk/backend"; // Server SDK
 
@@ -68,20 +68,6 @@ app.use(
 
 // IMPORTANT: Mount webhook raw parser BEFORE express.json() so Clerk signature verification receives the raw Buffer.
 // Clerk webhook URL in your Clerk dashboard is: /webhooks/clerk
-app.post(
-    "/webhooks/clerk",
-    bodyParser.raw({ type: "application/json" }),
-    (req, res) => {
-        // req.body here is a Buffer (raw body) required by Clerk verifyWebhook
-        req.rawBody = req.body;
-        // minimal logging for debugging webhook calls
-        console.log(
-            "🔔 /webhooks/clerk invoked, rawBody length:",
-            req.rawBody?.length || 0
-        );
-        ClerkWebhookHandler(req, res);
-    }
-);
 
 // Body parsing middleware (after webhook raw handler)
 app.use(cookieParser());
@@ -121,11 +107,11 @@ app.use(
 );
 
 // Sign-in endpoint (demo)
-app.post("/auth/login", async (req, res) => {
-    const { userId } = req.body; // Clerk userId from frontend
-    req.session.clerkId = userId;
-    res.sendStatus(200);
-});
+// app.post("/auth/login", async (req, res) => {
+//     const { userId } = req.body; // Clerk userId from frontend
+//     req.session.clerkId = userId;
+//     res.sendStatus(200);
+// });
 
 // Logout endpoint
 // app.post("/auth/logout", (req, res) => {
@@ -133,45 +119,45 @@ app.post("/auth/login", async (req, res) => {
 //         res.sendStatus(err ? 500 : 200);
 //     });
 // });
-app.post("/auth/logout", requireAuth(), async (req, res) => {
-    try {
-        // Destroy Express session
-        req.session.destroy((err) => {
-            if (err) console.error("Session destroy error:", err);
-        });
+// app.post("/auth/logout", requireAuth(), async (req, res) => {
+//     try {
+//         // Destroy Express session
+//         req.session.destroy((err) => {
+//             if (err) console.error("Session destroy error:", err);
+//         });
 
-        // Revoke Clerk session
-        const sessionId = req.auth.sessionId; // from Clerk
-        if (sessionId) {
-            await clerkClient.sessions.revokeSession(sessionId);
-        }
+//         // Revoke Clerk session
+//         const sessionId = req.auth.sessionId; // from Clerk
+//         if (sessionId) {
+//             await clerkClient.sessions.revokeSession(sessionId);
+//         }
 
-        res.status(200).json({ message: "Logged out successfully" });
-    } catch (error) {
-        console.error("Logout error:", error);
-        res.status(500).json({ error: "Logout failed" });
-    }
-});
+//         res.status(200).json({ message: "Logged out successfully" });
+//     } catch (error) {
+//         console.error("Logout error:", error);
+//         res.status(500).json({ error: "Logout failed" });
+//     }
+// });
 
 // Protected route for fetching user data
-app.get("/api/user", requireAuth(), async (req, res) => {
-    const userId = req.auth.userId;
-    if (!userId) return res.status(401).json({ error: "Not authenticated" });
+// app.get("/api/user", requireAuth(), async (req, res) => {
+//     const userId = req.auth.userId;
+//     if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
-    const user = await User.findOne({ clerkId: userId });
-    if (!user) return res.status(404).json({ error: "User not found" });
+//     const user = await User.findOne({ clerkId: userId });
+//     if (!user) return res.status(404).json({ error: "User not found" });
 
-    res.json({
-        clerkId: user.clerkId,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        username: user.username,
-        imageUrl: user.imageUrl,
-        createdAt: user.createdAt,
-        lastLoginAt: user.lastLoginAt,
-    });
-});
+//     res.json({
+//         clerkId: user.clerkId,
+//         email: user.email,
+//         firstName: user.firstName,
+//         lastName: user.lastName,
+//         username: user.username,
+//         imageUrl: user.imageUrl,
+//         createdAt: user.createdAt,
+//         lastLoginAt: user.lastLoginAt,
+//     });
+// });
 
 // 404 handler
 app.use((req, res) => {
@@ -207,7 +193,7 @@ app.use("/api/documents", sourceDocumentRoutes);
 
 // Root endpoint
 app.get("/", (req, res) => {
-  res.send("✅ API is running...");
+    res.send("✅ API is running...");
 });
 
 export default app;
