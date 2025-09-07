@@ -1,181 +1,116 @@
-c# HealthSpectrum
+# HealthSpectrum
 
-HealthSpectrum is a comprehensive healthcare document management and analysis system that helps healthcare providers manage patient documents, analyze medical records, and generate insights.
+A modern health analysis and reporting system built with the MERN stack.
 
-## 🌟 Features
-
-- **User Authentication & Authorization**
-
-  - Secure login and registration system
-  - Role-based access control
-  - JWT-based authentication
-
-- **Patient Management**
-
-  - Link patients to healthcare providers
-  - Manage patient profiles and records
-  - Secure access to patient information
-
-- **Document Management**
-
-  - Upload and store medical documents
-  - Cloud storage integration with Cloudinary
-  - Support for multiple document formats
-
-- **Medical Analysis**
-
-  - Automated analysis of medical documents
-  - Condition detection and risk assessment
-  - Medication tracking and test result analysis
-  - Generate comprehensive medical reports
-
-- **Interactive Dashboard**
-  - Modern, responsive UI
-  - Real-time updates
-  - Intuitive navigation
-  - Dark/Light theme support
-
-## 🛠️ Technology Stack
-
-### Frontend (Client)
-
-- **Framework**: React 18 with TypeScript
-- **Styling**:
-  - Tailwind CSS
-  - Shadcn/ui components
-  - Responsive design
-- **State Management**: React Query
-- **Form Handling**: React Hook Form with Zod validation
-- **UI Components**:
-  - Radix UI primitives
-  - Recharts for data visualization
-  - Framer Motion for animations
-- **Build Tool**: Vite
-
-### Backend (Server)
-
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB with Mongoose ODM
-- **Authentication**: JWT (JSON Web Tokens)
-- **File Storage**: Cloudinary
-- **Security**:
-  - Helmet for security headers
-  - CORS protection
-  - Password hashing with bcrypt
-
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
-
 - Node.js (v16 or higher)
 - MongoDB
-- Cloudinary account
+- Git
 
 ### Installation
 
 1. Clone the repository
-
 ```bash
-git clone https://github.com/ashutosh2652/HealthSpectrum.git
-cd HealthSpectrum
+git clone https://github.com/yourusername/HealthSpectrum-1.git
+cd HealthSpectrum-1
 ```
 
-2. Install dependencies for both client and server
-
+2. Install Server Dependencies
 ```bash
-# Install client dependencies
-cd client
-npm install
-
-# Install server dependencies
-cd ../server
+cd server
 npm install
 ```
 
-3. Set up environment variables
+3. Install Client Dependencies
+```bash
+cd ../client
+npm install
+```
 
-Create a `.env` file in the server directory:
+4. Set up Environment Variables
 
+Server (.env):
 ```env
-PORT=8000
-MONGODB_URI=your_mongodb_uri
-JWT_SECRET=your_jwt_secret
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/healthspectrum
+CORS_ORIGIN=http://localhost:5173
 ```
 
-4. Start the development servers
+Client (.env):
+```env
+VITE_API_URL=http://localhost:5000/api
+VITE_CLERK_PUBLISHABLE_KEY=your_clerk_key
+```
 
-In the server directory:
+5. Start Development Servers
 
+Server:
 ```bash
+cd server
 npm run dev
 ```
 
-In the client directory:
-
+Client:
 ```bash
+cd client
 npm run dev
 ```
+
+## 🛠️ Tech Stack
+
+### Frontend
+- React with TypeScript
+- Redux Toolkit
+- Tailwind CSS
+- Framer Motion
+- Clerk Authentication
+
+### Backend
+- Node.js & Express
+- MongoDB with Mongoose
+- JWT Authentication
 
 ## 📁 Project Structure
 
 ```
-HealthSpectrum/
-├── client/                 # Frontend application
+HealthSpectrum-1/
+├── client/                 # Frontend React application
 │   ├── src/
-│   │   ├── assets/        # Static assets
 │   │   ├── components/    # Reusable components
-│   │   ├── context/      # React context providers
-│   │   ├── hooks/        # Custom React hooks
-│   │   ├── lib/          # Utility functions
-│   │   ├── pages/        # Application pages
-│   │   └── App.tsx       # Main application component
-│   └── package.json
-│
-└── server/                # Backend application
+│   │   ├── pages/        # Page components
+│   │   ├── store/        # Redux store configuration
+│   │   └── types/        # TypeScript type definitions
+│   └── ...
+└── server/                # Backend Node.js application
     ├── src/
-    │   ├── controllers/  # Route controllers
-    │   ├── middleware/   # Express middleware
-    │   ├── models/       # Mongoose models
+    │   ├── controllers/   # Route controllers
+    │   ├── models/       # Database models
     │   ├── routes/       # API routes
-    │   ├── utils/        # Utility functions
-    │   └── app.js        # Express application setup
-    └── package.json
+    │   └── utils/        # Utility functions
+    └── ...
 ```
 
-## 🔒 Security Features
+## 🔐 Authentication
 
-- JWT-based authentication
-- Password hashing
-- Protected API routes
-- Secure file upload handling
-- Input validation and sanitization
-- Role-based access control
-- Secure HTTP headers with Helmet
+This project uses Clerk for authentication. Make sure to:
+1. Set up a Clerk account
+2. Configure your application
+3. Add the required environment variables
+
+## 📄 API Documentation
+
+API endpoints are documented in the server's README file.
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/YourFeature`)
-3. Commit your changes (`git commit -m 'Add some feature'`)
-4. Push to the branch (`git push origin feature/YourFeature`)
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
 ## 📝 License
 
-This project is licensed under the ISC License.
-
-## 👥 Authors
-
-- **Ashutosh** - _Initial work_
-
-## 🙏 Acknowledgments
-
-- [Shadcn/ui](https://ui.shadcn.com/) for the beautiful component library
-- [Radix UI](https://www.radix-ui.com/) for accessible component primitives
-- [Tailwind CSS](https://tailwindcss.com/) for the utility-first CSS framework
-- [MongoDB](https://www.mongodb.com/) for the database
-- [Cloudinary](https://cloudinary.com/) for media management
+This project is licensed under the MIT License.
