@@ -15,10 +15,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import geminiRoutes from "./routes/gemini.routes.js";
 import session from "express-session";
-// import dotenv from "dotenv";
-import bodyParser from "body-parser";
 
-import analysisRoutes from "./routes/Analysis.routes.js";
 import { User } from "./models/User.js";
 // import { ClerkWebhookHandler } from "./controllers/Clerk.controllers.js";
 import { requireAuth } from "@clerk/express"; // Protect routes
@@ -95,8 +92,6 @@ app.get("/health", (req, res) => {
 
 // API Routes
 app.use("/api", geminiRoutes);
-// API routes
-app.use("/api", analysisRoutes);
 
 // Clerk webhook endpoint note: kept above as /webhooks/clerk (matches Clerk dashboard)
 
