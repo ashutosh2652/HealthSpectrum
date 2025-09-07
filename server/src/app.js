@@ -86,8 +86,8 @@ app.use("/api", analysisRoutes);
 
 // Clerk webhook endpoint
 app.post("/api/webhooks/clerk", (req, res) => {
-    // Attach rawBody for signature verification
-    req.rawBody = req.body.toString();
+    // Attach rawBody as Buffer for signature verification
+    req.rawBody = req.body; // Buffer from bodyParser.raw
     ClerkWebhookHandler(req, res);
 });
 

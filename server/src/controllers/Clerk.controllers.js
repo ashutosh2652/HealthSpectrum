@@ -14,8 +14,8 @@ export const ClerkWebhookHandler = async (req, res) => {
         const signature = req.headers["clerk-signature"];
         const secret = process.env.CLERK_WEBHOOK_SECRET;
 
-        // Use raw body for signature verification
-        const rawBody = req.rawBody || JSON.stringify(req.body);
+        // Use raw body (Buffer) for signature verification
+        const rawBody = req.rawBody;
 
         // Verify Clerk webhook signature
         let event;
@@ -30,14 +30,17 @@ export const ClerkWebhookHandler = async (req, res) => {
             return res.status(400).send("Invalid signature");
         }
 
-        console.log("✅ Clerk webhook event received:", event.type);
+        // Parse event data from rawBody
+        const eventData = JSON.parse(rawBody.toString());
+
+        console.log("✅ Clerk webhook event received:", eventData.type);
 
         // Connect to MongoDB
         await connectdb();
 
         // 1️⃣ USER CREATED
-        if (event.type === "user.created") {
-            const user = event.data;
+        if (eventData.type === "user.created") {
+            const user = eventData.data;
 
             await User.create({
                 clerkId: user.id,
@@ -53,8 +56,8 @@ export const ClerkWebhookHandler = async (req, res) => {
         }
 
         // 2️⃣ SESSION CREATED
-        else if (event.type === "session.created") {
-            const session = event.data;
+        else if (eventData.type === "session.created") {
+            const session = eventData.data;
 
             const user = await clerkClient.users.getUser(session.user_id);
 
@@ -68,8 +71,8 @@ export const ClerkWebhookHandler = async (req, res) => {
         }
 
         // 3️⃣ SESSION ENDED
-        else if (event.type === "session.ended") {
-            const session = event.data;
+        else if (eventData.type === "session.ended") {
+            const session = eventData.data;
             console.log("👋 User logged out:", session.user_id);
             // Optionally update session status here
         }
