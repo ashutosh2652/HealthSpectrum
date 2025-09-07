@@ -110,58 +110,7 @@ app.use(
     })
 );
 
-// Sign-in endpoint (demo)
-// app.post("/auth/login", async (req, res) => {
-//     const { userId } = req.body; // Clerk userId from frontend
-//     req.session.clerkId = userId;
-//     res.sendStatus(200);
-// });
 
-// Logout endpoint
-// app.post("/auth/logout", (req, res) => {
-//     req.session.destroy((err) => {
-//         res.sendStatus(err ? 500 : 200);
-//     });
-// });
-// app.post("/auth/logout", requireAuth(), async (req, res) => {
-//     try {
-//         // Destroy Express session
-//         req.session.destroy((err) => {
-//             if (err) console.error("Session destroy error:", err);
-//         });
-
-//         // Revoke Clerk session
-//         const sessionId = req.auth.sessionId; // from Clerk
-//         if (sessionId) {
-//             await clerkClient.sessions.revokeSession(sessionId);
-//         }
-
-//         res.status(200).json({ message: "Logged out successfully" });
-//     } catch (error) {
-//         console.error("Logout error:", error);
-//         res.status(500).json({ error: "Logout failed" });
-//     }
-// });
-
-// Protected route for fetching user data
-// app.get("/api/user", requireAuth(), async (req, res) => {
-//     const userId = req.auth.userId;
-//     if (!userId) return res.status(401).json({ error: "Not authenticated" });
-
-//     const user = await User.findOne({ clerkId: userId });
-//     if (!user) return res.status(404).json({ error: "User not found" });
-
-//     res.json({
-//         clerkId: user.clerkId,
-//         email: user.email,
-//         firstName: user.firstName,
-//         lastName: user.lastName,
-//         username: user.username,
-//         imageUrl: user.imageUrl,
-//         createdAt: user.createdAt,
-//         lastLoginAt: user.lastLoginAt,
-//     });
-// });
 
 // 404 handler
 app.use((req, res) => {
