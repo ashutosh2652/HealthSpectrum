@@ -15,7 +15,7 @@ import AuthLayout from "./components/auth/Layout";
 import InsightsPage from "./pages/insights";
 import Processing from "./pages/Processing";
 import Results from "./pages/results";
-import Process from "./pages/process";
+import ProcessFile from "./pages/process.tsx";
 import { SignIn, SignUp } from "@clerk/clerk-react";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
@@ -42,7 +42,7 @@ const App = () => (
             <Route path="/insights" element={<InsightsPage />} />
             <Route path="/processing" element={<Processing />} />
             <Route path="/results" element={<Results />} />
-            <Route path="/process" element={<Process />} />
+            <Route path="/report" element={<ProcessFile />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
