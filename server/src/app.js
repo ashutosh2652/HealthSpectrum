@@ -18,35 +18,15 @@ const app = express();
 
 // Allowed origins
 const allowedOrigins = [
-    "http://localhost:3000",
-    "http://localhost:5173",
     "https://health-spectrum.vercel.app",
-    "https://healthspectrum.vercel.app",
-    process.env.CLIENT_BASE_URL,
-    process.env.FRONTEND_URL,
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
-].filter(Boolean);
+    "https://healthspectrum.onrender.com",
+];
 
 // CORS middleware
 app.use(
     cors({
-        origin: function (origin, callback) {
-            console.log("🔍 CORS Request from origin:", origin);
-            callback(null, true); // Allow all origins (for debugging)
-        },
-        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allowedHeaders: [
-            "Content-Type",
-            "Authorization",
-            "Pragma",
-            "Cache-Control",
-            "Expires",
-            "X-Requested-With",
-            "Accept",
-            "Origin",
-        ],
-        credentials: false,
-        optionsSuccessStatus: 204,
+        origin: allowedOrigins,
+        credentials: true,
     })
 );
 
