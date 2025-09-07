@@ -11,6 +11,7 @@ import {
   useUser,
 } from "@clerk/clerk-react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useEffect } from "react";
 
 // import UserProfile from "./components/UserProfile";
 
@@ -30,9 +31,14 @@ export const Navbar = ({
   const location = useLocation();
   const { user } = useUser();
   const { theme, toggleTheme } = useTheme();
-  const email = user?.emailAddresses[0].emailAddress;
-  const clerkId = user?.id;
-  const fullName = user?.firstName;
+
+  useEffect(() => {
+    if (user !== null && user !== undefined) {
+      const email = user?.emailAddresses[0].emailAddress;
+      const clerkId = user?.id;
+      const fullName = user?.firstName;
+    }
+  }, [user]);
 
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
@@ -71,53 +77,31 @@ export const Navbar = ({
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center space-x-6"
           >
-            {useInternalNavigation ? (
-              <>
-                <Button
-                  variant="ghost"
-                  className="text-muted-foreground hover:text-primary-glow transition-colors font-medium"
-                  onClick={onHomeClick}
-                >
-                  Home
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="text-muted-foreground hover:text-primary-glow transition-colors font-medium"
-                  onClick={onAboutClick}
-                >
-                  About
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link to="/">
-                  <Button
-                    variant="ghost"
-                    className={`transition-colors font-medium ${
-                      isActive("/")
-                        ? "text-primary-glow bg-primary-soft border border-primary/20 rounded-lg px-4"
-                        : "text-muted-foreground hover:text-primary-glow"
-                    }`}
-                  >
-                    Home
-                  </Button>
-                </Link>
+            <Link to="/">
+              <Button
+                variant="ghost"
+                className={`transition-colors font-medium ${
+                  isActive("/")
+                    ? "text-primary-glow bg-primary-soft border border-primary/20 rounded-lg px-4"
+                    : "text-muted-foreground hover:text-primary-glow"
+                }`}
+              >
+                Home
+              </Button>
+            </Link>
 
-                <Link to="/about">
-                  <Button
-                    variant="ghost"
-                    className={`transition-colors font-medium ${
-                      isActive("/about")
-                        ? "text-primary-glow bg-primary-soft border border-primary/20 rounded-lg px-4"
-                        : "text-muted-foreground hover:text-primary-glow"
-                    }`}
-                  >
-                    About
-                  </Button>
-                </Link>
-              </>
-            )}
-
+            <Link to="/about">
+              <Button
+                variant="ghost"
+                className={`transition-colors font-medium ${
+                  isActive("/about")
+                    ? "text-primary-glow bg-primary-soft border border-primary/20 rounded-lg px-4"
+                    : "text-muted-foreground hover:text-primary-glow"
+                }`}
+              >
+                About
+              </Button>
+            </Link>
             <Link to="/upload">
               <Button
                 variant="ghost"
