@@ -55,44 +55,10 @@ const features = [
   },
 ];
 
-const stats = [
-  { value: "10,000+", label: "Documents Analyzed", icon: FileText },
-  { value: "95%", label: "Accuracy Rate", icon: Brain },
-  { value: "<60s", label: "Average Processing", icon: Clock },
-  { value: "99.9%", label: "Data Security", icon: Shield },
-];
-
 export const FeaturesSection = () => {
   return (
     <section className="medical-section bg-card/30">
       <div className="medical-container">
-        {/* Stats Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20"
-        >
-          {stats.map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="text-center"
-            >
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                <stat.icon className="w-6 h-6 text-primary" />
-              </div>
-              <div className="text-3xl font-bold text-foreground mb-1">
-                {stat.value}
-              </div>
-              <div className="text-sm text-muted-foreground">{stat.label}</div>
-            </motion.div>
-          ))}
-        </motion.div>
-
         {/* Features Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

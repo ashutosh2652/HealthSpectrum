@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Shield, ArrowRight } from "lucide-react";
+import { Shield, ArrowRight, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -10,6 +10,7 @@ import {
   UserButton,
   useUser,
 } from "@clerk/clerk-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 // import UserProfile from "./components/UserProfile";
 
@@ -28,6 +29,7 @@ export const Navbar = ({
 }: NavbarProps) => {
   const location = useLocation();
   const { user } = useUser();
+  const { theme, toggleTheme } = useTheme();
   const email = user?.emailAddresses[0].emailAddress;
   const clerkId = user?.id;
   const fullName = user?.firstName;
@@ -141,6 +143,21 @@ export const Navbar = ({
                 History
               </Button>
             </Link>
+
+            {/* Theme Toggle Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleTheme}
+              className="w-10 h-10 p-0 text-muted-foreground hover:text-primary-glow transition-colors"
+              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            >
+              {theme === "dark" ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+            </Button>
             <SignedOut>
               {/* <p>You are signed out.</p> */}
               <SignInButton mode="modal" />
