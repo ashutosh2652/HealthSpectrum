@@ -58,23 +58,20 @@ const LANDING_AI_API_URL =
         ? "https://api.va.eu-west-1.landing.ai/v1/tools/agentic-document-analysis"
         : "https://api.va.landing.ai/v1/tools/agentic-document-analysis";
 
-// Handle API key - check if it's base64 encoded
-let LANDING_AI_API_KEY = process.env.LANDING_AI_API_KEY;
+// Decode the base64 API key to get username:password format
+const LANDING_AI_API_KEY = process.env.LANDING_AI_API_KEY;
+let decodedApiKey = LANDING_AI_API_KEY;
 
-// If the API key looks like base64, try to decode it
-if (
-    LANDING_AI_API_KEY &&
-    LANDING_AI_API_KEY.length > 20 &&
-    !LANDING_AI_API_KEY.includes(":")
-) {
+// If the API key is base64 encoded, decode it to get username:password
+if (LANDING_AI_API_KEY && !LANDING_AI_API_KEY.includes(":")) {
     try {
-        const decoded = Buffer.from(LANDING_AI_API_KEY, "base64").toString(
+        decodedApiKey = Buffer.from(LANDING_AI_API_KEY, "base64").toString(
             "utf-8"
         );
-        console.log("🔑 Decoded API key from base64");
-        LANDING_AI_API_KEY = decoded;
+        console.log("🔑 Decoded base64 API key to username:password format");
     } catch (error) {
-        console.log("🔑 API key is not base64 encoded, using as-is");
+        console.log("🔑 Using API key as-is");
+        decodedApiKey = LANDING_AI_API_KEY;
     }
 }
 
@@ -239,15 +236,21 @@ export const analyzeDocument = async (req, res) => {
         }
 
         // Debug API key
-        console.log("🔑 API Key length:", LANDING_AI_API_KEY.length);
+        console.log("🔑 API Key configured:", !!LANDING_AI_API_KEY);
+        console.log("🔑 API Key length:", LANDING_AI_API_KEY?.length || 0);
         console.log(
-            "🔑 API Key first 10 chars:",
-            LANDING_AI_API_KEY.substring(0, 10)
+            "🔑 Decoded API key format:",
+            decodedApiKey?.includes(":") ? "username:password" : "unknown"
         );
-        console.log(
-            "🔑 API Key last 10 chars:",
-            LANDING_AI_API_KEY.substring(LANDING_AI_API_KEY.length - 10)
-        );
+        if (decodedApiKey) {
+            console.log("🔑 API Key username:", decodedApiKey.split(":")[0]);
+        }
+        if (decodedApiKey && !decodedApiKey.includes(":")) {
+            console.log(
+                "🔑 API Key first 10 chars:",
+                LANDING_AI_API_KEY.substring(0, 10)
+            );
+        }
 
         const file = req.file;
         const {
@@ -257,6 +260,7 @@ export const analyzeDocument = async (req, res) => {
             pages,
             fieldsSchema,
         } = req.body;
+        console.log("Received analysis request:", req.body);
 
         if (!file) {
             return res.status(400).json({
@@ -266,48 +270,59 @@ export const analyzeDocument = async (req, res) => {
 
         tempFilePath = file.path;
 
-        // Prepare form data for LandingAI API
+        // Prepare form data for LandingAI API according to documentation
         const formData = new FormData();
 
-        // Add file based on type
+        // Add file based on type (exactly as per API docs)
         const fileStream = fs.createReadStream(tempFilePath);
         if (file.mimetype === "application/pdf") {
-            formData.append("pdf", fileStream);
+            formData.append("pdf", fileStream, {
+                filename: file.originalname,
+                contentType: file.mimetype,
+            });
         } else {
-            formData.append("image", fileStream);
+            formData.append("image", fileStream, {
+                filename: file.originalname,
+                contentType: file.mimetype,
+            });
         }
 
-        // Add optional parameters
+        // Add optional parameters as form data (as per docs)
         if (includeMarginalia !== undefined) {
-            formData.append("include_marginalia", includeMarginalia);
+            formData.append("include_marginalia", includeMarginalia.toString());
+        } else {
+            formData.append("include_marginalia", "true"); // Default value
         }
+
         if (includeMetadataInMarkdown !== undefined) {
             formData.append(
                 "include_metadata_in_markdown",
-                includeMetadataInMarkdown
+                includeMetadataInMarkdown.toString()
             );
+        } else {
+            formData.append("include_metadata_in_markdown", "true"); // Default value
         }
-        if (pages) {
-            formData.append("pages", pages);
-        }
+
         if (fieldsSchema) {
             formData.append("fields_schema", fieldsSchema);
         }
 
+        // Build URL with query parameters for pages
+        let apiUrl = LANDING_AI_API_URL;
+        if (pages) {
+            const urlParams = new URLSearchParams();
+            urlParams.append("pages", pages);
+            apiUrl = `${LANDING_AI_API_URL}?${urlParams.toString()}`;
+        }
+
         // Call LandingAI API
-        console.log("🚀 Calling LandingAI API:", LANDING_AI_API_URL);
+        console.log("🚀 Calling LandingAI API:", apiUrl);
+        console.log("🔑 Using Basic authentication with username:password");
 
-        // Clean and validate API key
-        const cleanApiKey = LANDING_AI_API_KEY.trim();
-        const authHeader = `Bearer ${cleanApiKey}`;
+        // Create authorization header - use Basic auth with the decoded credentials
+        const authHeader = `Basic ${Buffer.from(decodedApiKey).toString("base64")}`;
 
-        console.log("🔑 Auth header length:", authHeader.length);
-        console.log(
-            "🔑 Auth header preview:",
-            authHeader.substring(0, 20) + "..."
-        );
-
-        const landingAIResponse = await fetch(LANDING_AI_API_URL, {
+        const landingAIResponse = await fetch(apiUrl, {
             method: "POST",
             headers: {
                 Authorization: authHeader,
@@ -318,19 +333,28 @@ export const analyzeDocument = async (req, res) => {
 
         if (!landingAIResponse.ok) {
             const errorText = await landingAIResponse.text();
+            console.error("❌ LandingAI API Error Response:");
             console.error(
-                "❌ LandingAI API Error Response:",
+                "   Status:",
                 landingAIResponse.status,
                 landingAIResponse.statusText
             );
-            console.error("❌ LandingAI API Error Body:", errorText);
+            console.error(
+                "   Headers:",
+                Object.fromEntries(landingAIResponse.headers.entries())
+            );
+            console.error("   Body:", errorText);
 
             // Check if it's an authentication error
-            if (landingAIResponse.status === 401) {
+            if (
+                landingAIResponse.status === 401 ||
+                landingAIResponse.status === 403
+            ) {
                 return res.status(500).json({
                     error: "LandingAI API authentication failed",
                     message: "Invalid API key or authentication issue",
                     details: errorText,
+                    status: landingAIResponse.status,
                 });
             }
 
