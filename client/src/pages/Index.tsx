@@ -139,7 +139,10 @@ const Index = () => {
             </div>
 
             <div className="border-t border-border/50 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
-              <div>© 2024 Health-Spectrum. All rights reserved.</div>
+              <div>
+                © 2025 Health-Spectrum.Made with love ❤️,NIT JAMSHEDPUR. All
+                rights reserved.
+              </div>
               <div className="flex items-center space-x-2 mt-4 md:mt-0">
                 <Shield className="w-4 h-4 text-accent" />
                 <span>HIPAA Compliant & SOC 2 Certified</span>
