@@ -140,20 +140,20 @@ const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4 m-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50"
+          className="text-center bg-white/90 backdrop-blur-sm rounded-2xl p-8 border border-gray-200/50 shadow-lg m-4"
         >
           <div className="relative">
             <Loader className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
             <div className="absolute inset-0 w-12 h-12 border-4 border-blue-500/20 rounded-full mx-auto animate-pulse"></div>
           </div>
-          <p className="text-gray-300 text-lg font-medium">
+          <p className="text-gray-700 text-lg font-medium">
             Analyzing your health data...
           </p>
-          <p className="text-gray-500 text-sm mt-2">
+          <p className="text-gray-600 text-sm mt-2">
             This may take a few moments
           </p>
         </motion.div>
@@ -163,17 +163,17 @@ const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4 m-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center bg-red-500/10 backdrop-blur-sm rounded-2xl p-8 border border-red-500/20"
+          className="text-center bg-red-50/90 backdrop-blur-sm rounded-2xl p-8 border border-red-200/50 shadow-lg m-4"
         >
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <p className="text-gray-300 text-lg font-medium mb-2">
+          <p className="text-gray-800 text-lg font-medium mb-2">
             Something went wrong
           </p>
-          <p className="text-gray-500">{error}</p>
+          <p className="text-gray-600">{error}</p>
         </motion.div>
       </div>
     );
@@ -181,8 +181,8 @@ const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
 
   if (!report) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
-        <p className="text-gray-300">No report data available</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4 m-4">
+        <p className="text-gray-700">No report data available</p>
       </div>
     );
   }
@@ -190,7 +190,7 @@ const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
   const overallHealthScore = calculateOverallHealthScore(report);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 text-gray-900 p-6 m-4">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -201,19 +201,19 @@ const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
+          <div className="bg-gradient-to-r from-white/90 to-gray-50/90 backdrop-blur-sm rounded-2xl p-8 border border-gray-200/50 shadow-lg m-4">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-3">
+                <h2 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-3">
                   Medical Analysis Report
                 </h2>
-                <p className="text-gray-400 text-lg">
+                <p className="text-gray-600 text-lg">
                   Comprehensive health insights from your medical documents
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-sm text-gray-400 mb-1">Generated on</div>
-                <div className="text-white font-medium">
+                <div className="text-sm text-gray-600 mb-1">Generated on</div>
+                <div className="text-gray-900 font-medium">
                   {new Date(report.createdAt).toLocaleDateString()}
                 </div>
               </div>
@@ -224,7 +224,7 @@ const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowRawData(!showRawData)}
-                className="flex items-center space-x-2 bg-gray-700/50 hover:bg-gray-600/50 px-4 py-2.5 rounded-xl transition-all duration-200 border border-gray-600/50"
+                className="flex items-center space-x-2 bg-gray-100/80 hover:bg-gray-200/80 px-4 py-2.5 rounded-xl transition-all duration-200 border border-gray-300/50"
               >
                 <Code className="w-4 h-4" />
                 <span>{showRawData ? "Hide" : "Show"} Raw Data</span>
@@ -250,21 +250,21 @@ const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300"
+                className="bg-gradient-to-r from-white/90 to-gray-50/90 backdrop-blur-sm rounded-2xl p-8 border border-gray-200/50 hover:border-gray-300/50 transition-all duration-300 shadow-lg m-4"
               >
                 <div className="flex items-center mb-6">
                   <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4 shadow-lg shadow-blue-500/25">
                     <FileText className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-white">
+                    <h3 className="text-2xl font-bold text-gray-900">
                       Executive Summary
                     </h3>
-                    <p className="text-gray-400">Key findings and overview</p>
+                    <p className="text-gray-600">Key findings and overview</p>
                   </div>
                 </div>
-                <div className="bg-gray-900/50 rounded-xl p-6 border border-gray-700/30">
-                  <p className="text-gray-300 leading-relaxed text-lg">
+                <div className="bg-gray-50/80 rounded-xl p-6 border border-gray-200/50">
+                  <p className="text-gray-700 leading-relaxed text-lg">
                     {report.summary}
                   </p>
                 </div>
@@ -306,8 +306,8 @@ const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
                         {condition.name}
                       </h4>
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-white">
-                          {condition.confidenceScore}%
+                        <div className="text-2xl font-bold text-gray-900">
+                          {condition.confidenceScore.toFixed(2)}%
                         </div>
                         <div className="text-xs text-gray-400">Confidence</div>
                       </div>
@@ -735,7 +735,7 @@ const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center">
                       <div className="text-3xl font-bold text-white">
-                        {overallHealthScore}
+                        {overallHealthScore.toFixed(2)}
                       </div>
                       <div className="text-xs text-gray-400">/ 100</div>
                     </div>

@@ -1,4 +1,4 @@
-# HealthSpectrum
+c# HealthSpectrum
 
 HealthSpectrum is a comprehensive healthcare document management and analysis system that helps healthcare providers manage patient documents, analyze medical records, and generate insights.
 
