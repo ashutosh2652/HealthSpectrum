@@ -9,11 +9,8 @@ import {
   SignUpButton,
   UserButton,
   useUser,
-  useAuth,
 } from "@clerk/clerk-react";
-import { useEffect } from "react";
-import { loginToBackend, logoutFromBackend } from "../lib/api";
-import UserProfile from "./UserProfile";
+
 // import UserProfile from "./components/UserProfile";
 
 interface NavbarProps {
@@ -30,13 +27,10 @@ export const Navbar = ({
   useInternalNavigation = false,
 }: NavbarProps) => {
   const location = useLocation();
-  const { isSignedIn, userId } = useAuth();
-
-  useEffect(() => {
-    if (isSignedIn && userId) {
-      loginToBackend(userId);
-    }
-  }, [isSignedIn, userId]);
+  const { user } = useUser();
+  const email = user?.emailAddresses[0].emailAddress;
+  const clerkId = user?.id;
+  const fullName = user?.firstName;
 
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
@@ -158,10 +152,10 @@ export const Navbar = ({
                 style={{ display: "flex", gap: "1rem", alignItems: "center" }}
               >
                 <UserButton />
-                <button onClick={logoutFromBackend}>Logout</button>
+                {/* <button onClick={logoutFromBackend}>Logout</button> */}
               </div>
 
-              <UserProfile />
+              {/* <UserProfile /> */}
             </SignedIn>
             {/* <Link to="/auth/sign-in">
               <Button className="btn-medical-primary group">
