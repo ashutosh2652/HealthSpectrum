@@ -413,7 +413,7 @@ const Upload = () => {
                         >
                           <Brain className="w-5 h-5" />
                         </motion.div>
-                        Analyzing with Gemini AI...
+                        Analyzing with AI...
                       </>
                     ) : (
                       <>

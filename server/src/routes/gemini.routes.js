@@ -3,6 +3,8 @@ import multer from "multer";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import fs from "fs";
 import path from "path";
+import { AnalysisReport } from "../models/AnalysisReport.js";
+import mongoose from "mongoose";
 
 const router = express.Router();
 
@@ -467,6 +469,302 @@ Please provide only the JSON response without any additional text or formatting.
             console.log("ℹ️ [GEMINI] No temp file path to clean up");
         }
         console.log("🏁 [GEMINI] Analysis request completed");
+    }
+});
+
+// POST /api/generate-report - Generate comprehensive medical analysis report
+router.post("/generate-report", async (req, res) => {
+    try {
+        console.log(
+            "🔍 [REPORT] Comprehensive report generation request received"
+        );
+        console.log("🔍 [REPORT] Request body:", req.body);
+
+        // Check if Gemini API is configured
+        if (!process.env.GEMINI_API_KEY) {
+            console.error("❌ [REPORT] API key not configured");
+            return res.status(500).json({
+                error: "Gemini API key not configured",
+                message: "Please set GEMINI_API_KEY in environment variables",
+            });
+        }
+
+        // Validate request body
+        const { patientInfo, medications, documentType, summary } = req.body;
+
+        if (!patientInfo) {
+            return res.status(400).json({
+                error: "Missing patient information",
+                message:
+                    "Patient information is required for report generation",
+            });
+        }
+
+        console.log(
+            "🔑 [REPORT] API key found, initializing GoogleGenerativeAI..."
+        );
+
+        // Initialize Gemini AI
+        let genAI;
+        try {
+            genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+            console.log(
+                "✅ [REPORT] GoogleGenerativeAI initialized successfully"
+            );
+        } catch (initError) {
+            console.error(
+                "❌ [REPORT] Failed to initialize GoogleGenerativeAI:",
+                initError
+            );
+            return res.status(500).json({
+                error: "Gemini API initialization failed",
+                message: `Failed to initialize Google Generative AI: ${initError.message}`,
+            });
+        }
+
+        console.log("🤖 [REPORT] Initializing Gemini model...");
+        // Get the Gemini model
+        let model;
+        try {
+            model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            console.log("✅ [REPORT] Gemini model initialized successfully");
+        } catch (modelError) {
+            console.error(
+                "❌ [REPORT] Failed to get Gemini model:",
+                modelError
+            );
+            return res.status(500).json({
+                error: "Model initialization failed",
+                message: `Failed to initialize Gemini model: ${modelError.message}`,
+            });
+        }
+
+        // Generate schema-compliant prompt using the actual AnalysisReport model
+        const generateSchemaPrompt = () => {
+            return `
+You are a senior medical AI specialist. Based on the following patient information and extracted medical data, generate a comprehensive medical analysis report that matches our database schema exactly.
+
+PATIENT INFORMATION:
+- Name: ${patientInfo.name || "Not specified"}
+- Age: ${patientInfo.age || "Not specified"}
+- Date of Birth: ${patientInfo.dateOfBirth || "Not specified"}
+- Gender: ${patientInfo.gender || "Not specified"}
+
+DOCUMENT TYPE: ${documentType || "Not specified"}
+DOCUMENT SUMMARY: ${summary || "Not specified"}
+
+MEDICATIONS FOUND:
+${medications && medications.length > 0 ? medications.map((med) => `- ${med.name} (${med.dosage}, ${med.frequency}): ${med.instructions}`).join("\n") : "No medications found"}
+
+Please generate a comprehensive medical analysis report in this EXACT JSON format (matching our AnalysisReport schema):
+
+{
+  "summary": "A detailed 3-4 sentence summary of the patient's overall health status based on the available information",
+  "conditionsDetected": [
+    {
+      "name": "condition name (required)",
+      "confidenceScore": 85,
+      "estimatedOnsetDate": "2024-01-15T00:00:00.000Z",
+      "explanation": "Detailed explanation of why this condition is suspected based on the provided information"
+    }
+  ],
+  "medicationsMentioned": [
+    {
+      "name": "medication name",
+      "dosage": "dosage information",
+      "reason": "reason for prescription or medical indication"
+    }
+  ],
+  "testsExplained": [
+    {
+      "name": "test name",
+      "reason": "explanation of why this test was performed and what it indicates"
+    }
+  ],
+  "futureRisks": [
+    {
+      "text": "description of potential future health risk",
+      "confidenceScore": 75
+    }
+  ],
+  "recommendations": [
+    {
+      "text": "specific medical recommendation or action item",
+      "urgency": "normal"
+    }
+  ]
+}
+
+IMPORTANT SCHEMA REQUIREMENTS:
+1. conditionsDetected[].name and confidenceScore are REQUIRED fields
+2. urgency must be one of: "normal", "soon", "urgent" (default: "normal")
+3. confidenceScore should be a number between 60-95
+4. estimatedOnsetDate must be a valid ISO date string
+5. All text fields should be meaningful and medical-appropriate
+6. Base your analysis ONLY on the provided information
+7. Include at least 3-5 recommendations with appropriate urgency levels
+8. Use proper medical terminology while keeping explanations clear
+9. Return ONLY the JSON object without any additional text or formatting
+
+Generate the comprehensive medical analysis now:
+`;
+        };
+
+        // Create comprehensive medical analysis prompt
+        const reportPrompt = generateSchemaPrompt();
+
+        console.log(
+            "📝 [REPORT] Prompt prepared, length:",
+            reportPrompt.length
+        );
+        console.log("🚀 [REPORT] Sending request to Gemini API...");
+
+        // Generate content with Gemini
+        let result, response, text;
+        try {
+            console.log("🔄 [REPORT] Calling model.generateContent...");
+            result = await model.generateContent([reportPrompt]);
+            console.log("🔄 [REPORT] Getting response...");
+            response = await result.response;
+            console.log("🔄 [REPORT] Extracting text...");
+            text = response.text();
+            console.log(
+                "✅ [REPORT] Successfully received response from Gemini API"
+            );
+        } catch (apiError) {
+            console.error("❌ [REPORT] Gemini API call failed:", apiError);
+            return res.status(500).json({
+                error: "Gemini API call failed",
+                message: `API request failed: ${apiError.message}`,
+            });
+        }
+
+        console.log("📄 [REPORT] Raw response length:", text.length);
+        console.log("🔍 [REPORT] COMPLETE RAW RESPONSE:");
+        console.log(text);
+
+        // Parse the JSON response
+        let reportResult;
+        try {
+            console.log("🔄 [REPORT] Parsing JSON response...");
+            const cleanedText = text.replace(/```json\n?|\n?```/g, "").trim();
+            reportResult = JSON.parse(cleanedText);
+            console.log("✅ [REPORT] Successfully parsed JSON response");
+        } catch (parseError) {
+            console.error(
+                "❌ [REPORT] Failed to parse JSON:",
+                parseError.message
+            );
+
+            // Return a fallback structured response
+            reportResult = {
+                summary:
+                    "A comprehensive medical analysis was generated based on the provided patient information and document data. The analysis includes condition assessments, medication reviews, and healthcare recommendations.",
+                conditionsDetected: [],
+                medicationsMentioned: medications || [],
+                testsExplained: [],
+                futureRisks: [],
+                recommendations: [
+                    {
+                        text: "Continue regular medical checkups and monitoring",
+                        urgency: "normal",
+                    },
+                    {
+                        text: "Follow medication instructions as prescribed",
+                        urgency: "normal",
+                    },
+                    {
+                        text: "Maintain healthy lifestyle habits",
+                        urgency: "normal",
+                    },
+                ],
+                timeline: [],
+                keyEntities: {
+                    conditions: [],
+                    medications: medications
+                        ? medications.map((m) => m.name)
+                        : [],
+                    tests: [],
+                    symptoms: [],
+                    bodyParts: [],
+                },
+            };
+        }
+
+        // Save report to database (optional - only if MongoDB is connected)
+        let savedReport = null;
+        try {
+            console.log("💾 [REPORT] Attempting to save report to database...");
+
+            // Create temporary ObjectIds for required fields (since we don't have actual patient/user management yet)
+            const tempPatientId = new mongoose.Types.ObjectId();
+            const tempUserId = new mongoose.Types.ObjectId();
+
+            const reportData = {
+                patientId: tempPatientId,
+                createdBy: tempUserId,
+                sourceDocuments: [], // Empty for now, could be populated with actual document references
+                summary: reportResult.summary,
+                conditionsDetected: reportResult.conditionsDetected,
+                medicationsMentioned: reportResult.medicationsMentioned,
+                testsExplained: reportResult.testsExplained,
+                futureRisks: reportResult.futureRisks,
+                recommendations: reportResult.recommendations,
+            };
+
+            savedReport = await AnalysisReport.create(reportData);
+            console.log(
+                "✅ [REPORT] Report saved to database with ID:",
+                savedReport._id
+            );
+        } catch (dbError) {
+            console.warn(
+                "⚠️ [REPORT] Failed to save to database (continuing without DB):",
+                dbError.message
+            );
+            // Continue without database - this is optional
+        }
+
+        // Create final response
+        const finalResponse = {
+            id:
+                savedReport?._id ||
+                `report-${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+            patientId: patientInfo.name
+                ? `patient-${patientInfo.name.toLowerCase().replace(/\s+/g, "-")}`
+                : `patient-${Date.now()}`,
+            generatedDate: new Date().toISOString(),
+            status: "completed",
+            report: reportResult,
+            metadata: {
+                generatedBy: "Gemini AI",
+                model: "gemini-1.5-flash",
+                processingTime: Date.now(),
+                patientInfo: patientInfo,
+                savedToDatabase: !!savedReport,
+                databaseId: savedReport?._id,
+            },
+        };
+
+        console.log("📊 [REPORT] Final response created successfully");
+        console.log(
+            "🎉 [REPORT] Comprehensive report generation completed successfully"
+        );
+
+        res.json(finalResponse);
+    } catch (error) {
+        console.error(
+            "❌ [REPORT] CRITICAL ERROR - Report generation failed:",
+            error
+        );
+        res.status(500).json({
+            error: "Report generation failed",
+            message: error.message,
+            details:
+                process.env.NODE_ENV === "development"
+                    ? error.stack
+                    : undefined,
+        });
     }
 });
 

@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { User, Pill, Save, CheckCircle, X, Edit } from "lucide-react";
+import {
+  User,
+  Pill,
+  Save,
+  CheckCircle,
+  X,
+  Edit,
+  FileText,
+  Loader,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,6 +17,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
 
 interface AnalysisResult {
   documentType: string;
@@ -78,6 +88,116 @@ const DialogBox = ({
 }: DialogBoxProps) => {
   const [isSaved, setIsSaved] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const navigate = useNavigate();
+
+  const handleGenerateFinalReport = async () => {
+    setIsGeneratingReport(true);
+
+    try {
+      console.log("🔍 [DIALOG] Starting comprehensive report generation...");
+
+      // Get API URL from environment
+      const API_BASE_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+      // Prepare data for comprehensive analysis
+      const reportData = {
+        patientInfo: editablePatientInfo,
+        medications: analysisResult?.medicalFindings.medications || [],
+        documentType: analysisResult?.documentType || "Medical Document",
+        summary: analysisResult?.summary || "",
+        originalAnalysis: analysisResult,
+      };
+
+      console.log(
+        "📤 [DIALOG] Sending data to backend for comprehensive analysis..."
+      );
+      console.log("📊 [DIALOG] Report data:", reportData);
+
+      // Send to backend for comprehensive analysis
+      const response = await fetch(`${API_BASE_URL}/api/generate-report`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(reportData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || `HTTP ${response.status}: ${response.statusText}`
+        );
+      }
+
+      const result = await response.json();
+
+      console.log("✅ [DIALOG] Comprehensive report generated successfully!");
+      console.log("📊 [DIALOG] Report result:", result);
+
+      // Store the report data and navigate to Analysis page
+      console.log("💾 [DIALOG] Storing data to localStorage...");
+      try {
+        localStorage.setItem(
+          "medicalAnalysisReport",
+          JSON.stringify(result.report)
+        );
+        console.log("✅ [DIALOG] Stored medicalAnalysisReport successfully");
+
+        const metadataToStore = {
+          ...result.metadata,
+          reportId: result.id,
+          patientId: result.patientId,
+          generatedDate: result.generatedDate,
+          status: result.status,
+        };
+
+        localStorage.setItem("reportMetadata", JSON.stringify(metadataToStore));
+        console.log("✅ [DIALOG] Stored reportMetadata successfully");
+        console.log("📄 [DIALOG] Metadata stored:", metadataToStore);
+
+        // Verify the data was stored
+        const verifyReport = localStorage.getItem("medicalAnalysisReport");
+        const verifyMetadata = localStorage.getItem("reportMetadata");
+        console.log(
+          "🔍 [DIALOG] Verification - Report stored:",
+          !!verifyReport
+        );
+        console.log(
+          "🔍 [DIALOG] Verification - Metadata stored:",
+          !!verifyMetadata
+        );
+      } catch (storageError) {
+        console.error("❌ [DIALOG] localStorage error:", storageError);
+      }
+
+      // Close dialog and navigate to Analysis page
+      setShowResultDialog(false);
+
+      // Add a small delay to ensure localStorage operations complete
+      setTimeout(() => {
+        console.log("🚀 [DIALOG] Navigating to analysis page...");
+        navigate("/analysis", {
+          state: {
+            reportData: result.report,
+            metadata: {
+              ...result.metadata,
+              reportId: result.id,
+              patientId: result.patientId,
+              generatedDate: result.generatedDate,
+              status: result.status,
+            },
+          },
+        });
+      }, 100);
+    } catch (error) {
+      console.error("❌ [DIALOG] Report generation failed:", error);
+      alert(`Report generation failed: ${error.message}`);
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
 
   const handleSaveChanges = () => {
     console.log("Updated Patient Info:", editablePatientInfo);
@@ -296,13 +416,21 @@ const DialogBox = ({
                   </Button>
                 )}
                 <Button
-                  onClick={() => {
-                    console.log("Generating final report...");
-                    // Add your final report logic here
-                  }}
-                  className="px-6 py-3 text-base text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  onClick={handleGenerateFinalReport}
+                  disabled={isGeneratingReport}
+                  className="px-6 py-3 text-base text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50"
                 >
-                  📋 Get Final Report
+                  {isGeneratingReport ? (
+                    <>
+                      <Loader className="w-4 h-4 mr-2 animate-spin" />
+                      Generating Report...
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-4 h-4 mr-2" />
+                      📋 Get Final Report
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
