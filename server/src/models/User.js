@@ -12,10 +12,17 @@ const userSchema = new Schema(
     passwordHash: {
       type: String,
     },
-    linkedPatients: [{
-      type: Schema.Types.ObjectId,
-      ref: 'Patient',
-    }],
+    linkedPatients: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Patient",
+      },
+    ],
+
+    token: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );

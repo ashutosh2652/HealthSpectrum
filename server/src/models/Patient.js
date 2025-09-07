@@ -79,7 +79,8 @@ const patientSchema = new Schema(
       dietPreference: String,
     },
     maritalStatus: {
-      type: {type:String, required:true},
+      type: String,
+      required: true,
       enum: ["Single", "Married", "Divorced", "Widowed"],
     },
 
