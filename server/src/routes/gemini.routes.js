@@ -30,7 +30,7 @@ const storage = multer.diskStorage({
 const upload = multer({
     storage,
     limits: {
-        fileSize: 50 * 1024 * 1024, // 50MB limit
+        fileSize: 20 * 1024 * 1024, // 20MB limit (more reasonable for API processing)
     },
     fileFilter: (req, file, cb) => {
         // Accept PDFs and images
@@ -159,6 +159,15 @@ router.post("/analyze", upload.single("file"), async (req, res) => {
             return res.status(400).json({
                 error: "No file uploaded",
                 message: "Please upload a PDF or image file",
+            });
+        }
+
+        // Additional file validations
+        if (req.file.size === 0) {
+            console.error("❌ [GEMINI] Empty file uploaded");
+            return res.status(400).json({
+                error: "Empty file",
+                message: "The uploaded file is empty",
             });
         }
 
@@ -322,6 +331,8 @@ Please provide only the JSON response without any additional text or formatting.
             "📄 [GEMINI] First 200 chars of response:",
             text.substring(0, 200) + "..."
         );
+        console.log("🔍 [GEMINI] COMPLETE RAW RESPONSE:");
+        console.log(text);
 
         // Try to parse the JSON response
         let analysisResult;
@@ -336,6 +347,8 @@ Please provide only the JSON response without any additional text or formatting.
                 "📊 [GEMINI] Analysis result keys:",
                 Object.keys(analysisResult)
             );
+            console.log("🔍 [GEMINI] COMPLETE ANALYSIS RESULT:");
+            console.log(JSON.stringify(analysisResult, null, 2));
         } catch (parseError) {
             console.error(
                 "❌ [GEMINI] Failed to parse JSON:",

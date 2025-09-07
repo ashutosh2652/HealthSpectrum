@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
+import DialogBox from "@/components/DialogBox";
 
 interface PreviewFile {
   file: File;
@@ -20,10 +21,61 @@ interface PreviewFile {
   savedName?: string;
 }
 
+interface AnalysisResult {
+  documentType: string;
+  patientInfo: {
+    name: string | null;
+    age: string | null;
+    dateOfBirth: string | null;
+    gender: string | null;
+  };
+  dateOfDocument: string | null;
+  medicalFindings: {
+    conditions: Array<{
+      name: string;
+      severity: string | null;
+      notes: string;
+    }>;
+    medications: Array<{
+      name: string;
+      dosage: string;
+      frequency: string;
+      instructions: string;
+    }>;
+    vitalSigns: Array<{
+      type: string;
+      value: string;
+      unit: string;
+      normalRange: string | null;
+    }>;
+    labResults: Array<{
+      test: string;
+      result: string;
+      unit: string | null;
+      normalRange: string | null;
+      status: string | null;
+    }>;
+  };
+  recommendations: string[];
+  summary: string;
+  riskLevel: string;
+  keyInsights: string[];
+}
+
 const Upload = () => {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<PreviewFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
+    null
+  );
+  const [showResultDialog, setShowResultDialog] = useState(false);
+  const [editablePatientInfo, setEditablePatientInfo] = useState({
+    name: "",
+    age: "",
+    dateOfBirth: "",
+    gender: "",
+  });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -140,13 +192,15 @@ const Upload = () => {
           result.analysis?.medicalFindings?.labResults?.length || 0
         );
 
-        alert(
-          `✅ Analysis Complete!\n\n` +
-            `Document: ${result.analysis?.documentType || "Unknown"}\n` +
-            `Risk Level: ${result.analysis?.riskLevel || "Unknown"}\n` +
-            `Summary: ${result.analysis?.summary || "No summary available"}\n\n` +
-            `Check the console for detailed results!`
-        );
+        // Set analysis result and show dialog
+        setAnalysisResult(result.analysis);
+        setEditablePatientInfo({
+          name: result.analysis.patientInfo.name || "",
+          age: result.analysis.patientInfo.age || "",
+          dateOfBirth: result.analysis.patientInfo.dateOfBirth || "",
+          gender: result.analysis.patientInfo.gender || "",
+        });
+        setShowResultDialog(true);
       } else {
         alert("No files to analyze!");
       }
@@ -168,6 +222,15 @@ const Upload = () => {
     <div className="min-h-screen cosmic-bg">
       <div className="absolute inset-0 stars-pattern opacity-30"></div>
       <Navbar />
+
+      <DialogBox
+        showResultDialog={showResultDialog}
+        setShowResultDialog={setShowResultDialog}
+        analysisResult={analysisResult}
+        editablePatientInfo={editablePatientInfo}
+        setEditablePatientInfo={setEditablePatientInfo}
+      />
+
       <main className="pt-8 relative z-10">
         <section className="py-12 md:py-20 relative">
           <div className="medical-container">
@@ -355,7 +418,7 @@ const Upload = () => {
                     ) : (
                       <>
                         <Brain className="w-5 h-5 mr-2" />
-                        Analyze with Gemini AI
+                        Analyze with AI
                         <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
