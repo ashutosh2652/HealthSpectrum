@@ -2,6 +2,16 @@ import { motion } from "framer-motion";
 import { Shield, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+  useUser,
+} from "@clerk/clerk-react";
+
+// import UserProfile from "./components/UserProfile";
 
 interface NavbarProps {
   className?: string;
@@ -17,6 +27,10 @@ export const Navbar = ({
   useInternalNavigation = false,
 }: NavbarProps) => {
   const location = useLocation();
+  const { user } = useUser();
+  const email = user?.emailAddresses[0].emailAddress;
+  const clerkId = user?.id;
+  const fullName = user?.firstName;
 
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
@@ -37,9 +51,9 @@ export const Navbar = ({
               className="flex items-center space-x-3 cursor-pointer group"
             >
               <div className="w-10 h-10 overflow-hidden rounded-full shadow-glow group-hover:scale-110 transition-transform duration-300">
-                <img 
-                  src="/logo2.png" 
-                  alt="HealthSpectrum Logo" 
+                <img
+                  src="/logo2.png"
+                  alt="HealthSpectrum Logo"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -115,19 +129,6 @@ export const Navbar = ({
               </Button>
             </Link>
 
-            <Link to="/insights">
-              <Button
-                variant="ghost"
-                className={`transition-colors font-medium ${
-                  !useInternalNavigation && isActive("/insights")
-                    ? "text-primary-glow bg-primary-soft border border-primary/20 rounded-lg px-4"
-                    : "text-muted-foreground hover:text-primary-glow"
-                }`}
-              >
-                Insights
-              </Button>
-            </Link>
-
             <Link to="/history">
               <Button
                 variant="ghost"
@@ -140,14 +141,29 @@ export const Navbar = ({
                 History
               </Button>
             </Link>
+            <SignedOut>
+              {/* <p>You are signed out.</p> */}
+              <SignInButton mode="modal" />
+              <SignUpButton mode="modal" />
+            </SignedOut>
 
-            <Link to="/auth/sign-in">
+            <SignedIn>
+              <div
+                style={{ display: "flex", gap: "1rem", alignItems: "center" }}
+              >
+                <UserButton />
+                {/* <button onClick={logoutFromBackend}>Logout</button> */}
+              </div>
+
+              {/* <UserProfile /> */}
+            </SignedIn>
+            {/* <Link to="/auth/sign-in">
               <Button className="btn-medical-primary group">
                 <Shield className="w-4 h-4 mr-2" />
                 Login/Signup
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
-            </Link>
+            </Link> */}
           </motion.div>
         </div>
       </div>

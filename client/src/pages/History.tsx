@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
 import { motion } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import {
   FileText,
   Clock,
   Eye,
   Download,
   Search,
-  Filter,
   Calendar,
   Activity,
   AlertCircle,
@@ -15,14 +16,16 @@ import {
   Brain,
   ArrowRight,
   MoreVertical,
-  Trash2,
   Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
+import { AnalysisResultDisplay } from "@/components/AnalysisResultDisplay";
+import { type HealthAnalysisResult } from "@/services/analysisApi";
 
+// Interface for history reports
 interface HistoryReport {
   id: string;
   fileName: string;
@@ -31,18 +34,24 @@ interface HistoryReport {
   status: "completed" | "processing" | "error";
   reportType: string;
   riskLevel: "low" | "medium" | "high";
-  keyFindings: string[];
+  keyFindings?: string[];
+  conditions?: Array<{
+    name: string;
+    confidence?: number;
+    evidence?: string[];
+  }>;
   fileSize: string;
-  thumbnail?: string;
 }
 
 const History = () => {
+  const navigate = useNavigate(); // ✅ Initialize navigate
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+  const [selectedReport, setSelectedReport] = useState<HistoryReport | null>(null);
 
   // Mock data - replace with actual API call
-  const [reports, setReports] = useState<HistoryReport[]>([
+  const [reports] = useState<HistoryReport[]>([
     {
       id: "1",
       fileName: "Blood_Test_Results_Jan2024.pdf",
@@ -101,7 +110,8 @@ const History = () => {
     },
   ]);
 
-  const getStatusIcon = (status: string) => {
+  // Status icon
+  const getStatusIcon = (status: HistoryReport["status"]) => {
     switch (status) {
       case "completed":
         return <CheckCircle className="w-5 h-5 text-green-500" />;
@@ -114,7 +124,8 @@ const History = () => {
     }
   };
 
-  const getRiskBadgeColor = (riskLevel: string) => {
+  // Risk badge style
+  const getRiskBadgeColor = (riskLevel: HistoryReport["riskLevel"]) => {
     switch (riskLevel) {
       case "low":
         return "bg-green-100 text-green-800 border-green-200";
@@ -127,15 +138,43 @@ const History = () => {
     }
   };
 
-  const filteredReports = reports.filter((report) => {
-    const matchesSearch =
-      report.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.reportType.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter =
-      filterStatus === "all" || report.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  // Filter + sort
+  const filteredReports = useMemo(() => {
+    let result = reports.filter((report) => {
+      const matchesSearch =
+        report.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        report.reportType.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesFilter =
+        filterStatus === "all" || report.status === filterStatus;
+      return matchesSearch && matchesFilter;
+    });
 
+    if (sortBy === "newest") {
+      result = [...result].sort(
+        (a, b) =>
+          new Date(b.uploadDate).getTime() -
+          new Date(a.uploadDate).getTime()
+      );
+    } else if (sortBy === "oldest") {
+      result = [...result].sort(
+        (a, b) =>
+          new Date(a.uploadDate).getTime() -
+          new Date(b.uploadDate).getTime()
+      );
+    } else if (sortBy === "name") {
+      result = [...result].sort((a, b) =>
+        a.fileName.localeCompare(b.fileName)
+      );
+    } else if (sortBy === "type") {
+      result = [...result].sort((a, b) =>
+        a.reportType.localeCompare(b.reportType)
+      );
+    }
+
+    return result;
+  }, [reports, searchTerm, filterStatus, sortBy]);
+
+  // Stats
   const stats = [
     {
       title: "Total Reports",
@@ -210,7 +249,7 @@ const History = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
-                  className="card-medical-glow p-6"
+                  className="p-6 rounded-xl bg-background/80 border border-border shadow-md hover:shadow-lg transition"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -299,7 +338,10 @@ const History = () => {
                       ? "Try adjusting your search or filter criteria."
                       : "Upload your first medical document to get started with AI analysis."}
                   </p>
-                  <Button className="btn-medical-primary">
+                  <Button
+                    className="btn-medical-primary"
+                    onClick={() => navigate("/upload")} // ✅ SPA navigation
+                  >
                     <Brain className="w-5 h-5 mr-2" />
                     Upload New Document
                   </Button>
@@ -328,14 +370,14 @@ const History = () => {
                               <span className="flex items-center">
                                 <Calendar className="w-4 h-4 mr-1" />
                                 {new Date(
-                                  report.uploadDate
+                                  report.analysisDate
                                 ).toLocaleDateString()}
                               </span>
                               <span className="flex items-center">
                                 <Activity className="w-4 h-4 mr-1" />
-                                {report.reportType}
+                                {report.reportType || "Medical Document"}
                               </span>
-                              <span>{report.fileSize}</span>
+                              <span>{report.fileSize || "Unknown size"}</span>
                             </div>
 
                             <div className="flex items-center space-x-3 mb-4">
@@ -349,39 +391,42 @@ const History = () => {
                               {report.status === "completed" && (
                                 <Badge
                                   variant="outline"
-                                  className={`${getRiskBadgeColor(report.riskLevel)} capitalize`}
+                                  className={`${getRiskBadgeColor(
+                                    report.riskLevel
+                                  )} capitalize`}
                                 >
                                   {report.riskLevel} Risk
                                 </Badge>
                               )}
                             </div>
 
-                            {report.keyFindings.length > 0 && (
-                              <div className="mb-4">
-                                <h4 className="text-sm font-medium text-foreground mb-2">
-                                  Key Findings:
-                                </h4>
-                                <ul className="space-y-1">
-                                  {report.keyFindings
-                                    .slice(0, 2)
-                                    .map((finding, idx) => (
-                                      <li
-                                        key={idx}
-                                        className="text-sm text-muted-foreground flex items-start"
-                                      >
-                                        <span className="w-1.5 h-1.5 bg-accent rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                                        {finding}
+                            {report.conditions &&
+                              report.conditions.length > 0 && (
+                                <div className="mb-4">
+                                  <h4 className="text-sm font-medium text-foreground mb-2">
+                                    Key Findings:
+                                  </h4>
+                                  <ul className="space-y-1">
+                                    {report.conditions
+                                      .slice(0, 2)
+                                      .map((condition, idx) => (
+                                        <li
+                                          key={idx}
+                                          className="text-sm text-muted-foreground flex items-start"
+                                        >
+                                          <span className="w-1.5 h-1.5 bg-accent rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                                          {condition.name}
+                                        </li>
+                                      ))}
+                                    {report.conditions.length > 2 && (
+                                      <li className="text-sm text-accent">
+                                        +{report.conditions.length - 2} more
+                                        findings
                                       </li>
-                                    ))}
-                                  {report.keyFindings.length > 2 && (
-                                    <li className="text-sm text-accent">
-                                      +{report.keyFindings.length - 2} more
-                                      findings
-                                    </li>
-                                  )}
-                                </ul>
-                              </div>
-                            )}
+                                    )}
+                                  </ul>
+                                </div>
+                              )}
                           </div>
                         </div>
 
@@ -430,6 +475,7 @@ const History = () => {
                           <Button
                             size="sm"
                             className="btn-medical-primary group"
+                            onClick={() => setSelectedReport(report)}
                           >
                             View Analysis
                             <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
