@@ -31,6 +31,7 @@ export default function UserProfile() {
     fetchUser();
   }, []);
 
+  console.log(user, "user");
   if (!user) return <p>Loading user profile...</p>;
 
   return (

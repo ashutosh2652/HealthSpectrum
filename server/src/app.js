@@ -128,30 +128,30 @@ app.post("/auth/login", async (req, res) => {
 });
 
 // Logout endpoint
-app.post("/auth/logout", (req, res) => {
-    req.session.destroy((err) => {
-        res.sendStatus(err ? 500 : 200);
-    });
-});
-// app.post("/auth/logout", requireAuth(), async (req, res) => {
-//   try {
-//     // Destroy Express session
+// app.post("/auth/logout", (req, res) => {
 //     req.session.destroy((err) => {
-//       if (err) console.error("Session destroy error:", err);
+//         res.sendStatus(err ? 500 : 200);
 //     });
-
-//     // Revoke Clerk session
-//     const sessionId = req.auth.sessionId; // from Clerk
-//     if (sessionId) {
-//       await clerkClient.sessions.revokeSession(sessionId);
-//     }
-
-//     res.status(200).json({ message: "Logged out successfully" });
-//   } catch (error) {
-//     console.error("Logout error:", error);
-//     res.status(500).json({ error: "Logout failed" });
-//   }
 // });
+app.post("/auth/logout", requireAuth(), async (req, res) => {
+    try {
+        // Destroy Express session
+        req.session.destroy((err) => {
+            if (err) console.error("Session destroy error:", err);
+        });
+
+        // Revoke Clerk session
+        const sessionId = req.auth.sessionId; // from Clerk
+        if (sessionId) {
+            await clerkClient.sessions.revokeSession(sessionId);
+        }
+
+        res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+        console.error("Logout error:", error);
+        res.status(500).json({ error: "Logout failed" });
+    }
+});
 
 // Protected route for fetching user data
 app.get("/api/user", requireAuth(), async (req, res) => {
