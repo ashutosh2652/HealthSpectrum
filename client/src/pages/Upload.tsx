@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
-import { analysisApi } from "@/services/analysisApi";
 
 interface PreviewFile {
   file: File;
@@ -90,32 +89,69 @@ const Upload = () => {
     setIsProcessing(true);
 
     try {
-      // Test with the first uploaded file
       if (uploadedFiles.length > 0) {
         const firstFile = uploadedFiles[0];
-
         console.log(
-          "🧪 Testing LandingAI with file:",
+          "📄 Starting analysis for file:",
           firstFile.savedName || firstFile.file.name
         );
 
-        // Call your LandingAI API
-        const result = await analysisApi.analyzeDocument({
-          file: firstFile.file,
-          customName: firstFile.savedName || firstFile.file.name,
-          includeMarginalia: true,
-          includeMetadataInMarkdown: true,
+        // Prepare FormData for backend
+        const formData = new FormData();
+        formData.append("file", firstFile.file);
+        formData.append(
+          "customName",
+          firstFile.savedName || firstFile.file.name
+        );
+
+        console.log("� Sending file to backend for Gemini analysis...");
+
+        // Get API URL from environment
+        const API_BASE_URL =
+          import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+        // Send to backend
+        const response = await fetch(`${API_BASE_URL}/api/analyze`, {
+          method: "POST",
+          body: formData,
         });
 
-        console.log("✅ LandingAI Response:", result);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.message ||
+              `HTTP ${response.status}: ${response.statusText}`
+          );
+        }
+
+        const result = await response.json();
+
+        console.log("✅ Analysis completed successfully!");
+        console.log("📊 Gemini API Response:", result);
+        console.log("📄 Document Type:", result.analysis?.documentType);
+        console.log("📝 Summary:", result.analysis?.summary);
+        console.log("⚕️ Risk Level:", result.analysis?.riskLevel);
+        console.log(
+          "💊 Medications Found:",
+          result.analysis?.medicalFindings?.medications?.length || 0
+        );
+        console.log(
+          "🔬 Lab Results Found:",
+          result.analysis?.medicalFindings?.labResults?.length || 0
+        );
+
         alert(
-          `Analysis completed! Check console for details. Summary: ${result.summary || "No summary available"}`
+          `✅ Analysis Complete!\n\n` +
+            `Document: ${result.analysis?.documentType || "Unknown"}\n` +
+            `Risk Level: ${result.analysis?.riskLevel || "Unknown"}\n` +
+            `Summary: ${result.analysis?.summary || "No summary available"}\n\n` +
+            `Check the console for detailed results!`
         );
       } else {
         alert("No files to analyze!");
       }
     } catch (error) {
-      console.error("❌ LandingAI Error:", error);
+      console.error("❌ Analysis Error:", error);
       alert(`Analysis failed: ${error.message}`);
     } finally {
       setIsProcessing(false);
@@ -314,12 +350,12 @@ const Upload = () => {
                         >
                           <Brain className="w-5 h-5" />
                         </motion.div>
-                        Analyzing Documents...
+                        Analyzing with Gemini AI...
                       </>
                     ) : (
                       <>
                         <Brain className="w-5 h-5 mr-2" />
-                        Analyze Documents
+                        Analyze with Gemini AI
                         <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}

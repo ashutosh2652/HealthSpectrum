@@ -2,7 +2,7 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import analysisRoutes from "./routes/Analysis.routes.js";
+import geminiRoutes from "./routes/gemini.routes.js";
 
 const app = express();
 
@@ -132,14 +132,19 @@ app.get("/health", (req, res) => {
 });
 
 // API Routes
-app.use("/api", analysisRoutes);
+app.use("/api", geminiRoutes);
 
 // 404 handler for undefined routes - must be last
 app.use(function (req, res, next) {
     res.status(404).json({
         error: "Route not found",
         message: `Cannot ${req.method} ${req.originalUrl}`,
-        availableEndpoints: ["GET /", "GET /health", "POST /api/analyze"],
+        availableEndpoints: [
+            "GET /",
+            "GET /health",
+            "POST /api/analyze",
+            "GET /api/test",
+        ],
     });
 });
 

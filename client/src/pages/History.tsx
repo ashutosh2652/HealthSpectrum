@@ -22,8 +22,43 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
-import { AnalysisResultDisplay } from "@/components/AnalysisResultDisplay";
-import { type HealthAnalysisResult } from "@/services/analysisApi";
+
+// Legacy health analysis result interface (for existing data compatibility)
+interface HealthAnalysisResult {
+  id: string;
+  fileName: string;
+  customName?: string;
+  analysisDate: string;
+  status: "completed" | "processing" | "failed";
+  reportType: string;
+  summary: string;
+  conditions: Array<{
+    name: string;
+    confidence: number;
+    evidence: string[];
+    location: any;
+  }>;
+  medications: Array<{
+    name: string;
+    dosage: string;
+    frequency: string;
+    evidence: string[];
+    location: any;
+  }>;
+  vitalSigns: Array<{
+    type: string;
+    value: string;
+    unit: string;
+    date: string;
+    evidence: string[];
+    location: any;
+  }>;
+  recommendations: string[];
+  riskLevel: "low" | "medium" | "high";
+  pageCount: number;
+  processingTime: number;
+  errors: string[];
+}
 
 // Interface for history reports
 interface HistoryReport {
@@ -48,7 +83,9 @@ const History = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
-  const [selectedReport, setSelectedReport] = useState<HistoryReport | null>(null);
+  const [selectedReport, setSelectedReport] = useState<HistoryReport | null>(
+    null
+  );
 
   // Mock data - replace with actual API call
   const [reports] = useState<HistoryReport[]>([
@@ -152,19 +189,15 @@ const History = () => {
     if (sortBy === "newest") {
       result = [...result].sort(
         (a, b) =>
-          new Date(b.uploadDate).getTime() -
-          new Date(a.uploadDate).getTime()
+          new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
       );
     } else if (sortBy === "oldest") {
       result = [...result].sort(
         (a, b) =>
-          new Date(a.uploadDate).getTime() -
-          new Date(b.uploadDate).getTime()
+          new Date(a.uploadDate).getTime() - new Date(b.uploadDate).getTime()
       );
     } else if (sortBy === "name") {
-      result = [...result].sort((a, b) =>
-        a.fileName.localeCompare(b.fileName)
-      );
+      result = [...result].sort((a, b) => a.fileName.localeCompare(b.fileName));
     } else if (sortBy === "type") {
       result = [...result].sort((a, b) =>
         a.reportType.localeCompare(b.reportType)
