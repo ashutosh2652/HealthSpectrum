@@ -9,23 +9,16 @@ import authRoutes from "./routes/auth.routes.js";
 import analysisReportRoutes from "./routes/analysisReport.routes.js";
 import processingJobRoutes from "./routes/processingJob.routes.js";
 import sourceDocumentRoutes from "./routes/sourceDocument.routes.js";
-// import documentRoutes from './routes/document.routes.js';
 
 import dotenv from "dotenv";
 dotenv.config();
 import geminiRoutes from "./routes/gemini.routes.js";
 import session from "express-session";
 
-import { User } from "./models/User.js";
-// import { ClerkWebhookHandler } from "./controllers/Clerk.controllers.js";
-import { requireAuth } from "@clerk/express"; // Protect routes
-// import { clerkClient } from "@clerk/backend"; // Server SDK
-
 dotenv.config();
 
 const app = express();
 
-// Allowed origins
 const allowedOrigins = [
     "https://health-spectrum.vercel.app",
     "https://healthspectrum.onrender.com",
@@ -37,7 +30,6 @@ const allowedOrigins = [
     "http://127.0.0.1:5173",
 ];
 
-// CORS middleware
 app.use(
     cors({
         origin: allowedOrigins,
@@ -45,7 +37,6 @@ app.use(
     })
 );
 
-// Manual CORS headers fallback
 app.use((req, res, next) => {
     const origin = req.headers.origin;
     res.header("Access-Control-Allow-Origin", origin || "*");
@@ -62,46 +53,15 @@ app.use((req, res, next) => {
     next();
 });
 
-// Security middleware
-app.use(
-    helmet({
-        crossOriginEmbedderPolicy: false,
-        contentSecurityPolicy: false,
-    })
-);
+app.use(helmet());
 
-// IMPORTANT: Mount webhook raw parser BEFORE express.json() so Clerk signature verification receives the raw Buffer.
-// Clerk webhook URL in your Clerk dashboard is: /webhooks/clerk
-
-// Body parsing middleware (after webhook raw handler)
 app.use(cookieParser());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Health check
-app.get("/", (req, res) => {
-    res.json({
-        status: "ok",
-        message: "HealthSpectrum API Server is running",
-        timestamp: new Date().toISOString(),
-        version: "1.0.0",
-    });
-});
-
-app.get("/health", (req, res) => {
-    res.json({
-        status: "healthy",
-        uptime: process.uptime(),
-        timestamp: new Date().toISOString(),
-    });
-});
-
 // API Routes
 app.use("/api", geminiRoutes);
 
-// Clerk webhook endpoint note: kept above as /webhooks/clerk (matches Clerk dashboard)
-
-// Session setup
 app.use(
     session({
         secret: process.env.SESSION_SECRET || "change_me",
@@ -110,20 +70,11 @@ app.use(
     })
 );
 
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({
-        error: "Route not found",
-        message: `Cannot ${req.method} ${req.originalUrl}`,
-        availableEndpoints: [
-            "GET /",
-            "GET /health",
-            "POST /api/analyze",
-            "GET /api/test",
-        ],
-    });
-});
-
+app.use("/api/patients", patientRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/reports", analysisReportRoutes);
+app.use("/api/jobs", processingJobRoutes);
+app.use("/api/documents", sourceDocumentRoutes);
 // Global error handler
 app.use((err, req, res, next) => {
     console.error("Global error handler:", err);
@@ -139,17 +90,18 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Routes
-app.use("/api/patients", patientRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/reports", analysisReportRoutes);
-app.use("/api/jobs", processingJobRoutes);
-app.use("/api/documents", sourceDocumentRoutes);
-// app.use('/api/documents', documentRoutes);
-
-// Root endpoint
-app.get("/", (req, res) => {
-    res.send("✅ API is running...");
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({
+        error: "Route not found",
+        message: `Cannot ${req.method} ${req.originalUrl}`,
+        availableEndpoints: [
+            "GET /",
+            "GET /health",
+            "POST /api/analyze",
+            "GET /api/test",
+        ],
+    });
 });
 
 export default app;

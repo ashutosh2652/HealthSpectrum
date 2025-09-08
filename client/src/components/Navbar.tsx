@@ -50,6 +50,8 @@ export const Navbar = ({
       (email ? email.split("@")[0] : undefined);
 
     // Only proceed when we have at least an email or clerkId
+    console.log(email, " ", userName, " ", clerkId);
+
     dispatch(registerUserThunk({ email, userName, clerkId })).then(
       (data: any) => {
         if (data.payload.success) {
