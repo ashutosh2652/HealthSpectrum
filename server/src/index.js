@@ -18,7 +18,18 @@ console.log(
 
 const PORT = process.env.PORT || 5000;
 let server;
+function startServer() {
+    app.on("error", (error) => {
+        console.error("Error!!", error);
+        throw error;
+    });
 
+    server = app.listen(PORT, () => {
+        console.log(`🚀 Server running on http://localhost:${PORT}`);
+        // console.log(`📡 API endpoint: http://localhost:${PORT}/api/analyze`);
+        // console.log(`🧪 API test: http://localhost:${PORT}/api/test`);
+    });
+}
 connectdb()
     .then(() => {
         console.log("✅ MongoDB connected successfully");
@@ -33,6 +44,7 @@ connectdb()
         startServer();
     });
 
+<<<<<<< HEAD
 function startServer() {
     app.on("error", (error) => {
         console.log("❌ App Error:", error);
@@ -46,6 +58,8 @@ function startServer() {
     });
 }
 
+=======
+>>>>>>> 865491177bfdc8a2790e316593037a51c94f510c
 ["SIGTERM", "SIGINT"].forEach((sig) =>
     process.on(sig, async () => {
         console.info(`Caught ${sig} draining...`);

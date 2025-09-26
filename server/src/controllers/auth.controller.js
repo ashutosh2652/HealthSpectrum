@@ -22,8 +22,8 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-    const { email, clerkId } = req.body;
-    const user = await User.findOne({ email });
+    const { clerkId } = req.body;
+    const user = await User.findOne({ clerkId });
 
     if (!user) throw new ApiError(404, "User not found");
 

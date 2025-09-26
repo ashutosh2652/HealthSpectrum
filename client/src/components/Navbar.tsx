@@ -2,7 +2,12 @@ import { motion } from "framer-motion";
 import { Shield, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
-
+import { useUser } from "@clerk/clerk-react";
+// Adjust path if needed
+import { useDispatch } from "react-redux";
+import { registerUserThunk, loginUserThunk } from "@/store/thunk/authThunk"; // Adjust path if needed
+import { useTheme } from "next-themes";
+import { useEffect } from "react";
 interface NavbarProps {
   className?: string;
   onHomeClick?: () => void;
@@ -17,6 +22,35 @@ export const Navbar = ({
   useInternalNavigation = false,
 }: NavbarProps) => {
   const location = useLocation();
+  const { user } = useUser();
+  const { theme, setTheme } = useTheme();
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (!user) return;
+
+    // Guard all fields coming from Clerk to avoid runtime errors
+    const email =
+      user.emailAddresses && user.emailAddresses.length > 0
+        ? user.emailAddresses[0].emailAddress
+        : undefined;
+    const clerkId = user.id;
+    const userName =
+      user.firstName ||
+      user.username ||
+      (email ? email.split("@")[0] : undefined);
+
+    // Only proceed when we have at least an email or clerkId
+    console.log(email, " ", userName, " ", clerkId);
+
+    dispatch(registerUserThunk({ email, userName, clerkId })).then(
+      (data: any) => {
+        if (data.payload.success) {
+          loginUserThunk({ email, clerkId });
+        }
+      }
+    );
+  }, [user, dispatch]);
 
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
