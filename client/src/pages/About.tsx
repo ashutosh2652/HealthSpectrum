@@ -3,22 +3,15 @@ import { Brain, Shield, Users, Award, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import patientCare from "@/assets/patient-care.jpg";
 import doctorHero from "@/assets/doctor-hero.jpg";
-import { useTheme } from "@/contexts/ThemeContext";
 
 interface AboutProps {
   onBack: () => void;
 }
 
 export const About = ({ onBack }: AboutProps) => {
-  const { theme } = useTheme();
-
   return (
-    <div
-      className={`min-h-screen ${theme === "light" ? "bg-white" : "cosmic-bg"}`}
-    >
-      <div
-        className={`absolute inset-0 stars-pattern ${theme === "light" ? "opacity-30" : "opacity-40"}`}
-      ></div>
+    <div className="min-h-screen cosmic-bg">
+      <div className="absolute inset-0 stars-pattern opacity-40"></div>
 
       <div className="medical-container relative z-10">
         <motion.div
@@ -123,45 +116,15 @@ export const About = ({ onBack }: AboutProps) => {
                   duration: 0.6,
                   delay: 0.6 + index * 0.1,
                 }}
-                className={`text-center p-8 rounded-2xl border transition-all duration-300 ${
-                  theme === "light"
-                    ? "bg-white border-[#30a88e]/30 shadow-lg hover:shadow-xl hover:border-[#30a88e]/50"
-                    : "card-medical-glow"
-                }`}
+                className="card-medical-glow text-center p-8"
               >
-                <div
-                  className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 ${
-                    theme === "light"
-                      ? "shadow-lg"
-                      : "bg-gradient-primary shadow-glow"
-                  }`}
-                  style={
-                    theme === "light"
-                      ? {
-                          background:
-                            "linear-gradient(135deg, #273fb9, #30a88e)",
-                        }
-                      : {}
-                  }
-                >
-                  <value.icon className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-glow">
+                  <value.icon className="w-8 h-8 text-primary-foreground" />
                 </div>
-                <h3
-                  className={`text-xl font-semibold mb-4 ${
-                    theme === "light" ? "text-gray-800" : "text-foreground"
-                  }`}
-                >
+                <h3 className="text-xl font-semibold text-foreground mb-4">
                   {value.title}
                 </h3>
-                <p
-                  className={`${
-                    theme === "light"
-                      ? "text-gray-600"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {value.description}
-                </p>
+                <p className="text-muted-foreground">{value.description}</p>
               </motion.div>
             ))}
           </div>

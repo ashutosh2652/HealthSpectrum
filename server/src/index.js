@@ -1,6 +1,7 @@
-import app from "./app.js";
-import { connectdb, disconnectdb } from "./db/index.js";
 import dotenv from "dotenv";
+import { app } from "./app.js";
+import { connectdb, disconnectdb } from "./db/index.js";
+
 // Load environment variables
 dotenv.config();
 
@@ -34,7 +35,7 @@ connectdb()
 
 function startServer() {
     app.on("error", (error) => {
-        console.error("Error!!", error);
+        console.log("❌ App Error:", error);
         throw error;
     });
 
@@ -47,8 +48,12 @@ function startServer() {
 
 ["SIGTERM", "SIGINT"].forEach((sig) =>
     process.on(sig, async () => {
-        console.info(`Caught ${sig}, draining...`);
-        await disconnectdb();
+        console.info(`Caught ${sig} draining...`);
+        try {
+            await disconnectdb();
+        } catch (error) {
+            console.log("MongoDB disconnect error (ignoring):", error.message);
+        }
         server.close(() => process.exit(0));
     })
 );

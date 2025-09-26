@@ -1,51 +1,53 @@
 import express from "express";
-import cors from "cors";
 import helmet from "helmet";
+import cors from "cors";
 import cookieParser from "cookie-parser";
-
-// Import routes
-import patientRoutes from "./routes/patient.routes.js";
-import authRoutes from "./routes/auth.routes.js";
-import analysisReportRoutes from "./routes/analysisReport.routes.js";
-import processingJobRoutes from "./routes/processingJob.routes.js";
-import sourceDocumentRoutes from "./routes/sourceDocument.routes.js";
-// import documentRoutes from './routes/document.routes.js';
-
-import dotenv from "dotenv";
-dotenv.config();
 import geminiRoutes from "./routes/gemini.routes.js";
-import session from "express-session";
-
-import { User } from "./models/User.js";
-// import { ClerkWebhookHandler } from "./controllers/Clerk.controllers.js";
-import { requireAuth } from "@clerk/express"; // Protect routes
-// import { clerkClient } from "@clerk/backend"; // Server SDK
-
-dotenv.config();
 
 const app = express();
 
-// Allowed origins
+// CORS configuration for both development and production
 const allowedOrigins = [
-    "https://health-spectrum.vercel.app",
-    "https://healthspectrum.onrender.com",
-    "http://localhost:8080",
     "http://localhost:3000",
     "http://localhost:5173",
-    "http://127.0.0.1:8080",
+    "http://localhost:8080",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
-];
+    "https://health-spectrum.vercel.app",
+    "https://healthspectrum.vercel.app",
+    "https://health-spectrum-git-main.vercel.app",
+    "https://health-spectrum-git-rishav.vercel.app",
+    process.env.CLIENT_BASE_URL,
+    process.env.FRONTEND_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+].filter(Boolean);
 
-// CORS middleware
 app.use(
     cors({
-        origin: allowedOrigins,
-        credentials: true,
+        origin: function (origin, callback) {
+            console.log("🔍 CORS Request from origin:", origin);
+            console.log("✅ Allowed origins:", allowedOrigins);
+
+            // Always allow requests (for debugging)
+            callback(null, true);
+        },
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: [
+            "Content-Type",
+            "Authorization",
+            "Pragma",
+            "Cache-Control",
+            "Expires",
+            "X-Requested-With",
+            "Accept",
+            "Origin",
+        ],
+        credentials: false, // Set to false when allowing all origins
+        optionsSuccessStatus: 204,
     })
 );
 
-// Manual CORS headers fallback
+// Additional manual CORS headers (fallback)
 app.use((req, res, next) => {
     const origin = req.headers.origin;
     res.header("Access-Control-Allow-Origin", origin || "*");
@@ -55,30 +57,63 @@ app.use((req, res, next) => {
     );
     res.header(
         "Access-Control-Allow-Headers",
-        "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma, Clerk-Signature, clerk-signature"
+        "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma"
     );
 
-    if (req.method === "OPTIONS") return res.status(204).end();
+    if (req.method === "OPTIONS") {
+        console.log("🔧 Handling OPTIONS preflight request from:", origin);
+        return res.status(204).end();
+    }
+
     next();
 });
 
 // Security middleware
 app.use(
     helmet({
-        crossOriginEmbedderPolicy: false,
-        contentSecurityPolicy: false,
+        crossOriginEmbedderPolicy: false, // Allow file uploads
+        contentSecurityPolicy: false, // Disable for development
     })
 );
 
-// IMPORTANT: Mount webhook raw parser BEFORE express.json() so Clerk signature verification receives the raw Buffer.
-// Clerk webhook URL in your Clerk dashboard is: /webhooks/clerk
+// CORS middleware
+// app.use(
+//     cors({
+//         origin: function (origin, callback) {
+//             if (process.env.NODE_ENV === "production") {
+//                 // Allow only specific origins in production
+//                 if (!origin)
+//                     return callback(new Error("Not allowed by CORS"), false);
+//                 if (allowedOrigins.includes(origin)) {
+//                     callback(null, true);
+//                 } else {
+//                     callback(new Error("Not allowed by CORS"));
+//                 }
+//             } else {
+//                 // Allow all origins in development
+//                 callback(null, true);
+//             }
+//         },
+//         allowedHeaders: [
+//             "Content-Type",
+//             "Pragma",
+//             "Cache-Control",
+//             "Authorization",
+//             "Expires",
+//             "X-Requested-With",
+//         ],
+//         credentials: true,
+//         methods: ["GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"],
+//         optionsSuccessStatus: 200,
+//     })
+// );
 
-// Body parsing middleware (after webhook raw handler)
+// Body parsing middleware
 app.use(cookieParser());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Health check
+// Health check route
 app.get("/", (req, res) => {
     res.json({
         status: "ok",
@@ -99,19 +134,8 @@ app.get("/health", (req, res) => {
 // API Routes
 app.use("/api", geminiRoutes);
 
-// Clerk webhook endpoint note: kept above as /webhooks/clerk (matches Clerk dashboard)
-
-// Session setup
-app.use(
-    session({
-        secret: process.env.SESSION_SECRET || "change_me",
-        resave: false,
-        saveUninitialized: false,
-    })
-);
-
-// 404 handler
-app.use((req, res) => {
+// 404 handler for undefined routes - must be last
+app.use(function (req, res, next) {
     res.status(404).json({
         error: "Route not found",
         message: `Cannot ${req.method} ${req.originalUrl}`,
@@ -127,29 +151,20 @@ app.use((req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
     console.error("Global error handler:", err);
+
+    // Multer file upload errors
     if (err.code === "LIMIT_FILE_SIZE") {
         return res.status(400).json({
             error: "File too large",
             message: "File size exceeds 50MB limit",
         });
     }
+
+    // Default error response
     res.status(err.status || 500).json({
         error: err.message || "Internal server error",
         ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
     });
 });
 
-// Routes
-app.use("/api/patients", patientRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/reports", analysisReportRoutes);
-app.use("/api/jobs", processingJobRoutes);
-app.use("/api/documents", sourceDocumentRoutes);
-// app.use('/api/documents', documentRoutes);
-
-// Root endpoint
-app.get("/", (req, res) => {
-    res.send("✅ API is running...");
-});
-
-export default app;
+export { app };

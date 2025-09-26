@@ -1,21 +1,7 @@
 import { motion } from "framer-motion";
-import { Shield, ArrowRight, Sun, Moon } from "lucide-react";
+import { Shield, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-  useUser,
-} from "@clerk/clerk-react";
-import { useTheme } from "@/contexts/ThemeContext";
-import { useEffect } from "react";
-import { useDispatch } from "react-redux";
-import { registerUserThunk, loginUserThunk } from "@/store/thunk/authThunk";
-
-// import UserProfile from "./components/UserProfile";
 
 interface NavbarProps {
   className?: string;
@@ -31,33 +17,6 @@ export const Navbar = ({
   useInternalNavigation = false,
 }: NavbarProps) => {
   const location = useLocation();
-  const { user } = useUser();
-  const { theme, toggleTheme } = useTheme();
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    if (!user) return;
-
-    // Guard all fields coming from Clerk to avoid runtime errors
-    const email =
-      user.emailAddresses && user.emailAddresses.length > 0
-        ? user.emailAddresses[0].emailAddress
-        : undefined;
-    const clerkId = user.id;
-    const userName =
-      user.firstName ||
-      user.username ||
-      (email ? email.split("@")[0] : undefined);
-
-    // Only proceed when we have at least an email or clerkId
-    dispatch(registerUserThunk({ email, userName, clerkId })).then(
-      (data: any) => {
-        if (data.payload.success) {
-          loginUserThunk({ email, clerkId });
-        }
-      }
-    );
-  }, [user, dispatch]);
 
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
@@ -96,31 +55,53 @@ export const Navbar = ({
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center space-x-6"
           >
-            <Link to="/">
-              <Button
-                variant="ghost"
-                className={`transition-colors font-medium ${
-                  isActive("/")
-                    ? "text-primary-glow bg-primary-soft border border-primary/20 rounded-lg px-4"
-                    : "text-muted-foreground hover:text-primary-glow"
-                }`}
-              >
-                Home
-              </Button>
-            </Link>
+            {useInternalNavigation ? (
+              <>
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-primary-glow transition-colors font-medium"
+                  onClick={onHomeClick}
+                >
+                  Home
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-primary-glow transition-colors font-medium"
+                  onClick={onAboutClick}
+                >
+                  About
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/">
+                  <Button
+                    variant="ghost"
+                    className={`transition-colors font-medium ${
+                      isActive("/")
+                        ? "text-primary-glow bg-primary-soft border border-primary/20 rounded-lg px-4"
+                        : "text-muted-foreground hover:text-primary-glow"
+                    }`}
+                  >
+                    Home
+                  </Button>
+                </Link>
 
-            <Link to="/about">
-              <Button
-                variant="ghost"
-                className={`transition-colors font-medium ${
-                  isActive("/about")
-                    ? "text-primary-glow bg-primary-soft border border-primary/20 rounded-lg px-4"
-                    : "text-muted-foreground hover:text-primary-glow"
-                }`}
-              >
-                About
-              </Button>
-            </Link>
+                <Link to="/about">
+                  <Button
+                    variant="ghost"
+                    className={`transition-colors font-medium ${
+                      isActive("/about")
+                        ? "text-primary-glow bg-primary-soft border border-primary/20 rounded-lg px-4"
+                        : "text-muted-foreground hover:text-primary-glow"
+                    }`}
+                  >
+                    About
+                  </Button>
+                </Link>
+              </>
+            )}
+
             <Link to="/upload">
               <Button
                 variant="ghost"
@@ -147,43 +128,13 @@ export const Navbar = ({
               </Button>
             </Link>
 
-            {/* Theme Toggle Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleTheme}
-              className="w-10 h-10 p-0 text-muted-foreground hover:text-primary-glow transition-colors"
-              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-            >
-              {theme === "dark" ? (
-                <Sun className="w-5 h-5" />
-              ) : (
-                <Moon className="w-5 h-5" />
-              )}
-            </Button>
-            <SignedOut>
-              {/* <p>You are signed out.</p> */}
-              <SignInButton mode="modal" />
-              <SignUpButton mode="modal" />
-            </SignedOut>
-
-            <SignedIn>
-              <div
-                style={{ display: "flex", gap: "1rem", alignItems: "center" }}
-              >
-                <UserButton />
-                {/* <button onClick={logoutFromBackend}>Logout</button> */}
-              </div>
-
-              {/* <UserProfile /> */}
-            </SignedIn>
-            {/* <Link to="/auth/sign-in">
+            <Link to="/auth/sign-in">
               <Button className="btn-medical-primary group">
                 <Shield className="w-4 h-4 mr-2" />
                 Login/Signup
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
-            </Link> */}
+            </Link>
           </motion.div>
         </div>
       </div>

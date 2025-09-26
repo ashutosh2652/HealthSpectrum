@@ -97,86 +97,6 @@
 
     --radius: 16px;
   }
-
-  /* Light Theme Support */
-  .light {
-    /* Light Theme - Clean Medical Whites with Custom Colors */
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-
-    /* Card System with subtle depth */
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --card-hover: 171 10% 98%;
-
-    /* Medical Primary - Custom Green #30a88e */
-    --primary: 171 57% 42%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 171 57% 38%;
-    --primary-soft: 171 57% 42% / 0.15;
-    --primary-glow: 171 57% 52%;
-
-    /* Medical Secondary - Soft variation */
-    --secondary: 171 10% 95%;
-    --secondary-foreground: 240 10% 3.9%;
-    --secondary-hover: 171 10% 90%;
-
-    /* Medical Accent - Custom Green #30a88e */
-    --accent: 171 57% 42%;
-    --accent-foreground: 0 0% 100%;
-    --accent-soft: 171 57% 42% / 0.15;
-    --accent-glow: 171 57% 52%;
-
-    /* Medical Warning - Warm Orange */
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-    --warning-soft: 38 92% 50% / 0.15;
-
-    /* Medical Critical - Clean Red */
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --destructive-soft: 0 84% 60% / 0.15;
-
-    /* Interface Elements */
-    --muted: 171 5% 96%;
-    --muted-foreground: 240 5% 45%;
-
-    --border: 171 10% 90%;
-    --input: 0 0% 100%;
-    --ring: 171 57% 42%;
-
-    /* Light Theme Gradients with Custom Colors */
-    --gradient-primary: linear-gradient(135deg, #273fb9, #30a88e);
-    --gradient-medical: linear-gradient(135deg, #30a88e, #273fb9, #30a88e);
-    --gradient-background: radial-gradient(
-      ellipse at top,
-      hsl(0 0% 100%),
-      hsl(171 5% 98%)
-    );
-    --gradient-cosmic: linear-gradient(
-      135deg,
-      hsl(0 0% 100%),
-      hsl(171 5% 98%),
-      hsl(0 0% 100%)
-    );
-    --gradient-aurora: linear-gradient(
-      135deg,
-      hsl(171 57% 42% / 0.05),
-      hsl(233 65% 44% / 0.05),
-      hsl(171 57% 42% / 0.05)
-    );
-
-    /* Light Theme Shadows with Custom Green */
-    --shadow-medical: 0 20px 60px -10px hsl(171 57% 42% / 0.3);
-    --shadow-card: 0 8px 32px -8px hsl(171 30% 80% / 0.3);
-    --shadow-glow: 0 0 40px hsl(171 57% 52% / 0.4);
-    --shadow-accent: 0 0 30px hsl(171 57% 52% / 0.3);
-    --shadow-inner: inset 0 1px 0 hsl(171 57% 42% / 0.05);
-    --shadow-card: 0 8px 32px -8px hsl(145 50% 80% / 0.3);
-    --shadow-glow: 0 0 40px hsl(145 80% 52% / 0.4);
-    --shadow-accent: 0 0 30px hsl(145 80% 52% / 0.3);
-    --shadow-inner: inset 0 1px 0 hsl(145 80% 42% / 0.05);
-  }
 }
 
 @layer utilities {
@@ -252,8 +172,7 @@
     @apply absolute inset-0 bg-gradient-cosmic;
   }
 
-  /* Dark theme stars */
-  .dark .stars-pattern {
+  .stars-pattern {
     background-image:
       radial-gradient(
         2px 2px at 20px 30px,
@@ -275,24 +194,6 @@
     background-repeat: repeat;
     background-size: 200px 100px;
     @apply opacity-60;
-  }
-
-  /* Light theme stars (custom green dots) */
-  .light .stars-pattern {
-    background-image:
-      radial-gradient(2px 2px at 20px 30px, #1a6b5a, transparent),
-      radial-gradient(2px 2px at 40px 70px, #1a6b5a, transparent),
-      radial-gradient(1px 1px at 90px 40px, #1a6b5a, transparent),
-      radial-gradient(1px 1px at 130px 80px, #1a6b5a, transparent),
-      radial-gradient(2px 2px at 160px 30px, #1a6b5a, transparent);
-    background-repeat: repeat;
-    background-size: 200px 100px;
-    @apply opacity-60;
-  }
-
-  .stars-pattern {
-    background-repeat: repeat;
-    background-size: 200px 100px;
   }
 
   /* Enhanced Animations */
