@@ -99,9 +99,6 @@ app.get("/health", (req, res) => {
 // API Routes
 app.use("/api", geminiRoutes);
 
-// Clerk webhook endpoint note: kept above as /webhooks/clerk (matches Clerk dashboard)
-
-// Session setup
 app.use(
     session({
         secret: process.env.SESSION_SECRET || "change_me",
@@ -110,6 +107,18 @@ app.use(
     })
 );
 
+// Routes
+app.use("/api/patients", patientRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/reports", analysisReportRoutes);
+app.use("/api/jobs", processingJobRoutes);
+app.use("/api/documents", sourceDocumentRoutes);
+// app.use('/api/documents', documentRoutes);
+
+// Root endpoint
+app.get("/", (req, res) => {
+    res.send("✅ API is running...");
+});
 // 404 handler
 app.use((req, res) => {
     res.status(404).json({
@@ -123,7 +132,6 @@ app.use((req, res) => {
         ],
     });
 });
-
 // Global error handler
 app.use((err, req, res, next) => {
     console.error("Global error handler:", err);
@@ -138,18 +146,4 @@ app.use((err, req, res, next) => {
         ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
     });
 });
-
-// Routes
-app.use("/api/patients", patientRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/reports", analysisReportRoutes);
-app.use("/api/jobs", processingJobRoutes);
-app.use("/api/documents", sourceDocumentRoutes);
-// app.use('/api/documents', documentRoutes);
-
-// Root endpoint
-app.get("/", (req, res) => {
-    res.send("✅ API is running...");
-});
-
 export default app;
