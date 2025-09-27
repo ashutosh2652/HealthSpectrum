@@ -96,6 +96,7 @@ app.get("/health", (req, res) => {
     });
 });
 
+// API Routes
 app.use("/api", geminiRoutes);
 
 app.use(
